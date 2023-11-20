@@ -7,6 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OohelpWebApps.Software.Doma
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OohelpWebApps.Software.Contracts", "OohelpWebApps.Software.Contracts\OohelpWebApps.Software.Contracts.csproj", "{3DE0469D-8AF4-44EF-907F-BDB2DF39F606}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OohelpWebApps.Software.Server", "OohelpWebApps.Software.Server\OohelpWebApps.Software.Server.csproj", "{122686B6-598A-459A-990B-2A0AA47E92E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2BF70EE2-52B2-4E7D-9B76-F2DDF590CC2C}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +28,10 @@ Global
 		{3DE0469D-8AF4-44EF-907F-BDB2DF39F606}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3DE0469D-8AF4-44EF-907F-BDB2DF39F606}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3DE0469D-8AF4-44EF-907F-BDB2DF39F606}.Release|Any CPU.Build.0 = Release|Any CPU
+		{122686B6-598A-459A-990B-2A0AA47E92E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{122686B6-598A-459A-990B-2A0AA47E92E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{122686B6-598A-459A-990B-2A0AA47E92E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{122686B6-598A-459A-990B-2A0AA47E92E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

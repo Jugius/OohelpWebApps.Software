@@ -1,0 +1,92 @@
+﻿using OohelpSoft.Helpers.Result;
+using OohelpWebApps.Software.Server.Exceptions;
+using System.Text;
+
+namespace OohelpWebApps.Software.Server.Services;
+
+public class FileSystemService
+{
+    private const string FilesFolder = "UploadedFiles";
+    private readonly string _uploadDirectory;
+    public FileSystemService(IWebHostEnvironment env)
+    {
+        this._uploadDirectory = Path.Combine(env.ContentRootPath, FilesFolder);
+    }
+
+    public Task<OperationResult<bool>> SaveFile(byte[] fileBytes, Guid fileId)
+    {
+        string fileName = Guider.ToStringFromGuid(fileId);
+        return SaveFile(fileBytes, fileName);
+    }
+    public async Task<OperationResult<byte[]>> GetFileBytes(Guid fileId)
+    {
+        string fileName = Guider.ToStringFromGuid(fileId);
+        string filePath = Path.Combine(_uploadDirectory, fileName);
+
+        if (!System.IO.File.Exists(filePath))
+            return ApiException.FileSystemError("File not exist");
+
+        using (MemoryStream ms = new MemoryStream())
+        {
+            using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                await fs.CopyToAsync(ms);
+            }
+            return ms.ToArray();
+        }
+    }
+    public async Task<OperationResult<bool>> SaveFile(byte[] fileBytes, string fileName)
+    {
+        string filePath = Path.Combine(_uploadDirectory, fileName);
+        try
+        {
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await stream.WriteAsync(fileBytes);
+            }
+            return true;
+        }
+        catch (Exception ex)
+        {
+            return ApiException.FileSystemError(ex.GetBaseException().Message);
+        }
+    }
+
+    public OperationResult<bool> DeleteFile(Guid fileId)
+    {
+        string fileName = Guider.ToStringFromGuid(fileId);
+        return DeleteFile(fileName);
+    }
+    public OperationResult<bool> DeleteFile(string fileName)
+    {
+        string filePath = Path.Combine(_uploadDirectory, fileName);
+
+        if (!System.IO.File.Exists(filePath))
+            return ApiException.FileSystemError("File not exist");
+
+        try
+        {
+            System.IO.File.Delete(filePath);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            return ApiException.FileSystemError(ex.GetBaseException().Message);
+        }
+    }
+    public string GetCheckSum(byte[] bytes)
+    {
+        using var stream = new MemoryStream(bytes);
+        byte[] hash = System.Security.Cryptography.MD5.Create().ComputeHash(stream);
+        return MakeHashString(hash);
+    }
+    private static string MakeHashString(byte[] hash)
+    {
+        StringBuilder s = new StringBuilder(hash.Length * 2);
+
+        foreach (byte b in hash)
+            s.Append(b.ToString("X2").ToLower());
+
+        return s.ToString();
+    }
+}

@@ -396,3 +396,5 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/OohelpWebApps.Software.Server/appsettings.Production.json
+/OohelpWebApps.Software.Server/UploadedFiles
