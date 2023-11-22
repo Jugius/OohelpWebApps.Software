@@ -1,0 +1,18 @@
+﻿<Window x:Class="Updater.NetCore.Wpf.UITests.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Updater.NetCore.Wpf.UITests"
+        mc:Ignorable="d"
+        Title="MainWindow" Icon="/icon_update_128px.png"
+        SizeToContent="WidthAndHeight" WindowStartupLocation="CenterScreen"  ResizeMode="NoResize" UseLayoutRounding="True">
+    <StackPanel Orientation="Vertical" Margin="10" >
+        <Button Content="Manual" Click="Manual_Click" IsDefault="True" Margin="0,0,0,10"/>
+        <Button Content="Automatic" Click="Automatic_Click" Margin="0,0,0,10"/>
+        <Button Content="AutomaticDownload_UpdateOnRequest" Click="AutomaticDownload_UpdateOnRequest_Click" Margin="0,0,0,10"/>
+        <Button Content="DownloadAndUpdateOnRequest" Click="DownloadAndUpdateOnRequest_Click" Margin="0,0,0,10"/>
+        <Button Content="Get Status" Click="GetStatus_Click" Margin="0,0,0,10"/>
+        <Button Content="Get Runtime" Click="GetRuntime_Click" Margin="0,0,0,10"/>
+    </StackPanel>    
+</Window>
