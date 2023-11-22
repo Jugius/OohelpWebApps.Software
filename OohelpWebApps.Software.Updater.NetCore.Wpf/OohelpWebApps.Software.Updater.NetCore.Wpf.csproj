@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net6.0-windows;net7.0-windows;net8.0-windows</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>    
+    <UseWPF>true</UseWPF>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <RootNamespace>OohelpWebApps.Software.Updater</RootNamespace>
+    <AssemblyName>OohelpSoft.Software.Updater.NetCore.Wpf</AssemblyName>
+
+    <Version>1.0.0</Version>
+    <Authors>OoHelp.Net</Authors>
+    <Company>OoHelp.Net</Company>
+    <PackageId>$(AssemblyName)</PackageId>
+    <Copyright>OoHelp.Net</Copyright>
+    <Description>Библиотека контроля обновлений для платформы .Net Core WPF</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Dialogs\icon_attention_24px.png" />
+    <None Remove="Dialogs\icon_downloading_updates_48px.png" />
+    <None Remove="Dialogs\icon_protect_24px.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Dialogs\icon_attention_24px.png" />
+    <Resource Include="Dialogs\icon_downloading_updates_48px.png" />
+    <Resource Include="Dialogs\icon_protect_24px.png" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,45 @@
+﻿<Window x:Class="OohelpWebApps.Software.Updater.Dialogs.UpdateDownloadDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:OohelpWebApps.Software.Updater.Dialogs.Controls"
+        xmlns:local="clr-namespace:OohelpWebApps.Software.Updater.Dialogs"
+        mc:Ignorable="d"
+        x:ClassModifier="internal"
+        Title="Visual Studio Installer"
+        Background="#fbfbfb"
+        Height="545" Width="735" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel VerticalAlignment="Center" Grid.Column="1" Orientation="Vertical" Margin="130">
+            <TextBlock Text="Загрузка обновления..." />
+            
+
+            <ProgressBar controls:ProgressBarSmoother.SmoothValue="{Binding ProgressValue, Mode=OneWay}"
+                    Margin="0,10" Height="5" Foreground="#1774a6"
+                             d:Value="30"
+                             IsIndeterminate="{Binding ProgressIsIndeterminate}"/>
+
+            <TextBlock Text="{Binding ProgressStatus}" d:Text="Завершено: 30% (13 Мб / 125 Мб)"/>
+        </StackPanel>
+
+        <Border Grid.Row="1" Height="1" Background="LightGray" VerticalAlignment="Stretch"/>
+        <DockPanel Grid.Row="2" Margin="15">
+            <StackPanel DockPanel.Dock="Left" Orientation="Vertical" VerticalAlignment="Center">
+                <TextBlock d:Text="Текущая версия: 17.3.1" Text="{Binding CurrentVersion}"/>
+                <TextBlock d:Text="Версия обновления: 17.3.2" Text="{Binding UpdateVersion}" Margin="0,5,0,0"/>
+            </StackPanel>
+            <WrapPanel DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+                <Button Height="30" Width="110" 
+                        Background="#e3e3e3" BorderThickness="0"
+                        Click="CancelButton_Click" Content="Отмена"/>
+            </WrapPanel>
+        </DockPanel>
+    </Grid>
+</Window>
