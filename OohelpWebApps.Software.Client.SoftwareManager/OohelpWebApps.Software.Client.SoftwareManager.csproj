@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net7.0-windows</TargetFramework>
+    <Nullable>disable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Resources\icon_api.ico</ApplicationIcon>
+    <RootNamespace>SoftwareManager</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\icon_add_48px.png" />
+    <None Remove="Resources\icon_api.ico" />
+    <None Remove="Resources\icon_download_48px.png" />
+    <None Remove="Resources\icon_edit_48px.png" />
+    <None Remove="Resources\icon_json_48px_.png" />
+    <None Remove="Resources\icon_json_save_48px.png" />
+    <None Remove="Resources\icon_refresh_48px.png" />
+    <None Remove="Resources\icon_remove_48px.png" />
+    <None Remove="Resources\icon_settings_48px.png" />
+    <None Remove="Resources\icon_website_48px.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--<PackageReference Include="OohelpSoft.LibControls.Core.WPF" Version="1.1.0" />-->
+    <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
+    <PackageReference Include="Telerik.Windows.Controls.for.Wpf.Xaml" Version="2023.2.718" />
+    <PackageReference Include="Telerik.Windows.Controls.GridView.for.Wpf.Xaml" Version="2023.2.718" />
+    <PackageReference Include="Telerik.Windows.Controls.Input.for.Wpf.Xaml" Version="2023.2.718" />
+    <PackageReference Include="Telerik.Windows.Data.for.Wpf.Xaml" Version="2023.2.718" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OohelpWebApps.Software.Contracts\OohelpWebApps.Software.Contracts.csproj" />
+    <ProjectReference Include="..\OohelpWebApps.Software.Domain\OohelpWebApps.Software.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\icon_add_48px.png" />
+    <Resource Include="Resources\icon_api.ico" />
+    <Resource Include="Resources\icon_download_48px.png" />
+    <Resource Include="Resources\icon_edit_48px.png" />
+    <Resource Include="Resources\icon_json_48px_.png" />
+    <Resource Include="Resources\icon_json_save_48px.png" />
+    <Resource Include="Resources\icon_refresh_48px.png" />
+    <Resource Include="Resources\icon_remove_48px.png" />
+    <Resource Include="Resources\icon_settings_48px.png" />
+    <Resource Include="Resources\icon_website_48px.png" />
+  </ItemGroup>
+
+</Project>
