@@ -1,25 +1,24 @@
-﻿using System;
-using System.IO;
+﻿using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
-namespace OohelpWebApps.Software.ZipExtractor.NetFramework.WinForms;
+namespace OohelpWebApps.Software.ZipExtractor.NetCore.WinForms;
 
 internal static class Program
 {
     /// <summary>
-    /// The main entry point for the application.
+    ///  The main entry point for the application.
     /// </summary>
     [STAThread]
     static async Task Main()
     {
         StringBuilder _logBuilder = new StringBuilder();
+        _logBuilder.AppendLine($"Version: {Assembly.GetExecutingAssembly().GetName().Version}");
+        _logBuilder.AppendLine($"Runtime: {Environment.Version}");
         _logBuilder.AppendLine(DateTime.Now.ToString("dd.MM.yyyy hh.mm.ss"));
 
         string appDir = AppDomain.CurrentDomain.BaseDirectory;
         ExtractionArgs extractionArgs = ExtractionArgs.Parse(Environment.GetCommandLineArgs(), _logBuilder);
-        
+
         if (extractionArgs == null)
         {
             File.WriteAllText(Path.Combine(appDir, "ZipExtractor.log"), _logBuilder.ToString());
@@ -47,6 +46,6 @@ internal static class Program
             File.WriteAllText(Path.Combine(appDir, "ZipExtractor.log"),
                 _logBuilder.ToString());
         }
-        
+
     }
 }

@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Win32.SafeHandles;
+using SharpCompress.Archives;
+using SharpCompress.Archives.Zip;
+using SharpCompress.Common;
+
 
 namespace OohelpWebApps.Software.ZipExtractor;
 
@@ -65,35 +62,39 @@ public sealed class ExtractionService
 
     private async Task ExtractFilesAsync(CancellationToken cancellationToken = default, IProgress<ExtractionProgress> progress = null)
     {
-        const string Ok = " - OK";
-        // Open an existing zip file for reading.
-        using (ZipStorer zip = ZipStorer.Open(_extractionArgs.ZipFile, FileAccess.Read))
+        const string Ok = " - OK";       
+
+        await Task.Run(() =>
         {
-            // Read the central directory collection.
-            List<ZipStorer.ZipFileEntry> dir = zip.ReadCentralDir();
-
-            _logBuilder.AppendLine($"{dir.Count} файлов и папок в архиве");
-
-            int fileNum = 0;
-            foreach (var entry in dir)
+            using (var archive = ZipArchive.Open(_extractionArgs.ZipFile))
             {
-                if (cancellationToken != null)
-                    cancellationToken.ThrowIfCancellationRequested();
+                var count = archive.Entries.Count(entry => !entry.IsDirectory);
+                var totalSize = archive.TotalUncompressSize;
 
-                string filePath = Path.Combine(_extractionArgs.ExtractionDirectory, entry.FilenameInZip);
-                progress?.Report(new ExtractionProgress(fileNum++ * 100 / dir.Count, "Извлечение " + entry.FilenameInZip));
-                _logBuilder.Append(entry.FilenameInZip);
+                _logBuilder.AppendLine($"{count} файлов и папок в архиве");
 
-                using (var stream = System.IO.File.Create(filePath))
+                long decompressed = 0;
+                foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
                 {
-                    _ = await zip.ExtractFileAsync(entry, stream);
-                }           
-                
-                progress?.Report(new ExtractionProgress(fileNum * 100 / dir.Count));
-                _logBuilder.AppendLine(Ok);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    progress?.Report(new ExtractionProgress((int)((double)decompressed / (double)totalSize * 100), $"Извлечение {entry.Key}"));
+                    _logBuilder.Append(entry.Key);
+
+                    entry.WriteToDirectory(_extractionArgs.ExtractionDirectory, new ExtractionOptions()
+                    {
+                        ExtractFullPath = true,
+                        Overwrite = true
+                    });
+                    decompressed += entry.Size;
+                    progress?.Report(new ExtractionProgress((int)((double)decompressed / (double)totalSize * 100)));
+                    _logBuilder.AppendLine(Ok);
+                }
+
             }
-        }
+        });
     }
+
+    
 
     private async static Task KillProcessAsync(Process process)
     {
@@ -162,4 +163,42 @@ public sealed class ExtractionService
             _logBuilder.AppendLine($"Ошибка старта приложения: {_extractionArgs.ExecutableFile}. {ex.Message}");
         }
     }
+    //void Unpack(string file, string tempPath, CancellationToken cancellationToken)
+    //{
+    //    List<string> files;
+
+    //    using (Stream stream = File.OpenRead(file))
+    //    using (var archive = ArchiveFactory.Open(stream))
+    //    {
+    //        var fileNames = archive.Entries.Select(x => x.Key).ToList();
+    //        files = fileNames.Select(x => Path.Combine(tempPath, x)).ToList();
+
+    //        // https://github.com/RupertAvery/PSXPackager/pull/40
+    //        archive.EntryExtractionBegin += (sender, args) =>
+    //        {
+    //            _notifier.Notify(PopstationEventEnum.DecompressStart, args.Item.Key);
+    //            _currentFileDecompressedSize = args.Item.Size;
+    //        };
+
+    //        archive.EntryExtractionEnd += (sender, args) =>
+    //        {
+    //            _notifier.Notify(PopstationEventEnum.DecompressProgress, 100);
+    //            _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
+    //        };
+
+    //        archive.CompressedBytesRead += ArchiveFileOnExtracting;
+    //        foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
+    //        {
+    //            entry.WriteToDirectory(tempPath, new ExtractionOptions()
+    //            {
+    //                ExtractFullPath = true,
+    //                Overwrite = true
+    //            });
+    //        }
+    //        archive.CompressedBytesRead -= ArchiveFileOnExtracting;
+
+    //    }
+
+    //    tempFiles.AddRange(files);
+    //}
 }

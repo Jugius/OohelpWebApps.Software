@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "OohelpWebApps.Software.ZipExtractor.NetCore.WinForms": {
+      "commandName": "Project",
+      "commandLineArgs": "d:\\Temp\\ZipExtractor\\14122021.zip d:\\Temp\\ZipExtractor\\Report\\ d:\\Temp\\ZipExtractor\\Report\\GridsDownloader.exe y"
+    }
+  }
+}
