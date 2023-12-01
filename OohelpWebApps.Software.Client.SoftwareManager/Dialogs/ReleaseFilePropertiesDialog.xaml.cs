@@ -1,7 +1,6 @@
 ﻿using OohelpWebApps.Software.Domain;
 using SoftwareManager.ViewModels.Entities;
 using System;
-using System.Collections.Generic;
 using System.Windows;
 
 namespace SoftwareManager.Dialogs;
@@ -15,18 +14,8 @@ public partial class ReleaseFilePropertiesDialog : Window
     {
         InitializeComponent();
 
-        cmbKinds.ItemsSource = new List<FileKind>
-        {
-            FileKind.Install,
-            FileKind.Update
-        };
-
-        cmbRuntimeVersions.ItemsSource = new List<FileRuntimeVersion>
-        {
-            FileRuntimeVersion.NetFramework,
-            FileRuntimeVersion.Net5,
-            FileRuntimeVersion.Net6
-        };
+        cmbKinds.ItemsSource = Enum.GetValues<FileKind>();
+        cmbRuntimeVersions.ItemsSource = Enum.GetValues<FileRuntimeVersion>();
     }
     public ReleaseFilePropertiesDialog(ReleaseFileVM file) : this()
     {
