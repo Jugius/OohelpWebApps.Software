@@ -26,7 +26,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OohelpWebApps.Software.Upda
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Updater.NetFramework.WinForms.TestApp", ".tests\Updater.NetFramework.WinForms.TestApp\Updater.NetFramework.WinForms.TestApp.csproj", "{CDFB3257-6505-4ED8-9EE5-53BB9690C878}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OohelpWebApps.Software.ZipExtractor.NetFramework.WinForms", "OohelpWebApps.Software.ZipExtractor.NetFramework.WinForms\OohelpWebApps.Software.ZipExtractor.NetFramework.WinForms.csproj", "{DD4C15EF-E358-46D3-8402-88447CF68665}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OohelpWebApps.Software.ZipExtractor.WinForms", "OohelpWebApps.Software.ZipExtractor.WinForms\OohelpWebApps.Software.ZipExtractor.WinForms.csproj", "{5D4A9E5D-EF60-41F0-8DC1-7D339267DC0A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -66,10 +66,10 @@ Global
 		{CDFB3257-6505-4ED8-9EE5-53BB9690C878}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CDFB3257-6505-4ED8-9EE5-53BB9690C878}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CDFB3257-6505-4ED8-9EE5-53BB9690C878}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DD4C15EF-E358-46D3-8402-88447CF68665}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DD4C15EF-E358-46D3-8402-88447CF68665}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DD4C15EF-E358-46D3-8402-88447CF68665}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DD4C15EF-E358-46D3-8402-88447CF68665}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D4A9E5D-EF60-41F0-8DC1-7D339267DC0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D4A9E5D-EF60-41F0-8DC1-7D339267DC0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D4A9E5D-EF60-41F0-8DC1-7D339267DC0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D4A9E5D-EF60-41F0-8DC1-7D339267DC0A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

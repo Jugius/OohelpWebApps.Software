@@ -7,21 +7,24 @@ namespace Updater.NetCore.Wpf.UITests;
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
-public partial class MainWindow : Window, OohelpWebApps.Software.Updater.IUpdatableApplication
+public partial class MainWindow : Window, IUpdatableApplication
 {
-    private readonly OohelpWebApps.Software.Updater.ApplicationDeployment applicationDeployment;    
+    private readonly ApplicationDeployment applicationDeployment;    
 
     public MainWindow()
     {
         InitializeComponent();
         this.applicationDeployment = new ApplicationDeployment(this);
-    }    
-    public string ApplicationName => "OohPanel";
-    public Version Version => new Version(1, 6);
-    public string UpdatesServerPath => @"https://localhost:7164";// @"https://software.oohelp.net";
-    Window IUpdatableApplication.MainWindow => this;
+    }   
+    
 
+    public string ApplicationName => "OohPanel";
+    public Version Version { get; } = new Version(1, 8, 6);
+    public Uri UpdatesServer { get; } = new Uri("https://localhost:7164"); // new Uri("https://software.oohelp.net");
+    Window IUpdatableApplication.MainWindow => this;
     public Uri DownloadPage { get; } = new Uri("https://oohelp.net");
+
+
 
     private void Manual_Click(object sender, RoutedEventArgs e)
     {
@@ -45,11 +48,6 @@ public partial class MainWindow : Window, OohelpWebApps.Software.Updater.IUpdata
 
     private void GetStatus_Click(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show(this.applicationDeployment.GetStatus(), "Status", MessageBoxButton.OK, MessageBoxImage.Information);
-    }
-
-    private void GetRuntime_Click(object sender, RoutedEventArgs e)
-    {
-        MessageBox.Show(ApplicationDeployment.GetRunningRuntimeVersion().ToString(), "Runtime", MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageBox.Show(this.applicationDeployment.ToString(), "Status", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 }

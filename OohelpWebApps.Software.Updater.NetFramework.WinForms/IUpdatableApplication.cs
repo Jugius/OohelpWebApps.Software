@@ -7,7 +7,7 @@ public interface IUpdatableApplication
 {
     string ApplicationName { get; }
     Version Version { get; }
-    string UpdatesServerPath { get; }
+    Uri UpdatesServer { get; }
     Uri DownloadPage { get; }
     Form MainWindow { get; }
 }

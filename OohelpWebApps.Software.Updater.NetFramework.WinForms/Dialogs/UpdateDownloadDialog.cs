@@ -55,7 +55,7 @@ internal partial class UpdateDownloadDialog : Form
         this.apiService = apiService;
 
         this._bytesTotal = updateRequest.ApplicationReleaseFile.Size + updateRequest.ExtractorReleaseFile.Size;
-        this._bytesTotalString = Extentions.FileSizeExtention.FormatBytes(_bytesTotal, 1, true);
+        this._bytesTotalString = FilesService.FormatBytes(_bytesTotal, 1, true);
     }
 
     protected override async void OnShown(EventArgs e)
@@ -83,8 +83,8 @@ internal partial class UpdateDownloadDialog : Form
                 FilesService.ThrowIfChecksumInvalid(_appFile, downloaded_appFile),
                 FilesService.ThrowIfChecksumInvalid(_extractorFile, downloaded_extractorFile));
 
-            downloaded_appFile = FilesService.MoveTempFileToUpdateDirectory(_appFile, downloaded_appFile);
-            downloaded_extractorFile = FilesService.MoveTempFileToUpdateDirectory(_extractorFile, downloaded_extractorFile);
+            downloaded_appFile = FilesService.MoveFileToUpdateDirectory(downloaded_appFile, _appFile.Name);
+            downloaded_extractorFile = FilesService.MoveFileToUpdateDirectory(downloaded_extractorFile, _extractorFile.Name);
 
             this.DownloadedUpdate = new DownloadedUpdate
             {
@@ -134,7 +134,7 @@ internal partial class UpdateDownloadDialog : Form
         if (this.ProgressValue != persent)
         {
             this.ProgressValue = this._bytesLoaded * 100 / this._bytesTotal;
-            this.ProgressStatus = $"Завершено: {persent}% ({Extentions.FileSizeExtention.FormatBytes(this._bytesLoaded, 1, true)} / {_bytesTotalString})";
+            this.ProgressStatus = $"Завершено: {persent}% ({FilesService.FormatBytes(this._bytesLoaded, 1, true)} / {_bytesTotalString})";
         }
     }
 

@@ -90,6 +90,7 @@
     <Compile Include="Common\Enums\RuntimeVersion.cs" />
     <Compile Include="Common\ReleaseDetail.cs" />
     <Compile Include="Common\ReleaseFile.cs" />
+    <Compile Include="DeploymentOrder.cs" />
     <Compile Include="Dialogs\DialogProvider.cs" />
     <Compile Include="Dialogs\UpdateDownloadDialog.cs">
       <SubType>Form</SubType>
@@ -105,11 +106,10 @@
     </Compile>
     <Compile Include="DownloadedUpdate.cs" />
     <Compile Include="DownloadUpdateRequest.cs" />
-    <Compile Include="Extentions\FileSizeExtention.cs" />
-    <Compile Include="Extentions\HttpClientExtention.cs" />
-    <Compile Include="Extentions\ReleaseFileExtention.cs" />
+    <Compile Include="Extentions\InternalModelsExtention.cs" />
     <Compile Include="Extentions\VersionExtention.cs" />
     <Compile Include="IUpdatableApplication.cs" />
+    <Compile Include="IUpdate.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -120,6 +120,7 @@
     <Compile Include="Services\FilesService.cs" />
     <Compile Include="Services\HttpClientFactory.cs" />
     <Compile Include="Services\OperationResult.cs" />
+    <Compile Include="UpdateCommand.cs" />
     <Compile Include="UpdateMethod.cs" />
     <Compile Include="UpdateStatus.cs" />
     <EmbeddedResource Include="Dialogs\UpdateDownloadDialog.resx">

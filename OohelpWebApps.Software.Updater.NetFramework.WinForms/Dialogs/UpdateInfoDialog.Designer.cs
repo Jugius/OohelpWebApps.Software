@@ -174,13 +174,12 @@ partial class UpdateInfoDialog
             // 
             // lblUpdateStatus
             // 
-            this.lblUpdateStatus.AutoSize = true;
             this.lblUpdateStatus.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
             this.lblUpdateStatus.Location = new System.Drawing.Point(188, 163);
             this.lblUpdateStatus.Name = "lblUpdateStatus";
-            this.lblUpdateStatus.Size = new System.Drawing.Size(80, 15);
+            this.lblUpdateStatus.Size = new System.Drawing.Size(164, 49);
             this.lblUpdateStatus.TabIndex = 11;
-            this.lblUpdateStatus.Text = "Не запущено";
+            this.lblUpdateStatus.Text = "Обновление будет установлено после выхода из приложения";
             // 
             // lblUpdateSize
             // 

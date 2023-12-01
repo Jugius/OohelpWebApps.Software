@@ -10,37 +10,60 @@ using OohelpWebApps.Software.Updater.Common.Enums;
 namespace OohelpWebApps.Software.Updater.Dialogs;
 internal class DialogProvider
 {
-    private readonly System.Windows.Forms.Form _owner;
+    private readonly IUpdatableApplication _application;
+    private Form DialogsOwner => _application.MainWindow;
 
-    public DialogProvider(Form owner)
+    public DialogProvider(IUpdatableApplication application)
     {
-        _owner = owner;
+        _application = application;
     }
-    public void ShowException(string message, string caption)
+    public void ShowException(string message, string caption) => this.DialogsOwner.Invoke(() =>
     {
-        this._owner.Invoke(() => 
-        {
-            MessageBox.Show(message, caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }); 
+        MessageBox.Show(message, caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+    });
+    public void ShowException_SearchUpdateError(Exception error, UpdateMethod method)
+    {
+        if (method != UpdateMethod.Manual) return;
+
+        ShowException(error.Message, "Ошибка проверки обновления");
+    }
+    public void ShowException_GetExtractorError(Exception error, Version updateVersion, UpdateMethod method)
+    {
+        if (method != UpdateMethod.Manual) return;
+
+        string message = $"Обнаружена новая версия {updateVersion.ToFormattedString()}, " +
+                    "но не удалось получить информацию о загрузке.\n" +
+                    "Вы можете повторить позже.\n\n" +
+                    "Ошибка: " + error.Message;
+
+        this.ShowException(message, "Ошибка загрузки обновления");
     }
 
-    internal void ShowMessage(string message, string caption)
+    internal void ShowMessage(string message, string caption) => this.DialogsOwner.Invoke(() =>
     {
-        this._owner.Invoke(() =>
+        MessageBox.Show(message, caption, MessageBoxButtons.OK, MessageBoxIcon.Information);
+    });
+
+    internal void ShowMessage_YouUseLastVersion(UpdateMethod method)
+    {
+        if (method == UpdateMethod.Manual)
         {
-            MessageBox.Show(message, caption, MessageBoxButtons.OK, MessageBoxIcon.Information);
-        });
+            ShowMessage(
+                message: $"Вы используете последнюю версию {_application.ApplicationName}." +
+                $"\nТекущая версия: {_application.Version.ToFormattedString()}",
+                caption: "Обновление");
+        }
     }
-    internal DownloadedUpdate ShowUpdateDownloadDialog(IUpdatableApplication application, DownloadUpdateRequest updateRequest, ApiSoftwareService apiService) => (DownloadedUpdate)this._owner.Invoke(() =>
+    internal DownloadedUpdate ShowUpdateDownloadDialog(DownloadUpdateRequest updateRequest, ApiSoftwareService apiService) => (DownloadedUpdate)this.DialogsOwner.Invoke(() =>
     {
         UpdateDownloadDialog dlg = new UpdateDownloadDialog(updateRequest, apiService)
         {
-            Text = $"{application.ApplicationName} Installer",
-            CurrentVersion = "Текущая версия: " + application.Version.ToFormattedString(),
+            Text = $"{_application.ApplicationName} Installer",
+            CurrentVersion = "Текущая версия: " + _application.Version.ToFormattedString(),
             UpdateVersion = "Версия обновления: " + updateRequest.Release.Version.ToFormattedString(),
 
-            Owner = _owner,
-            Icon = application.MainWindow.Icon
+            Owner = DialogsOwner,
+            Icon = DialogsOwner.Icon
         };
 
         var dialogResult = dlg.ShowDialog();
@@ -54,11 +77,11 @@ internal class DialogProvider
         return null;
     });
 
-    private static string GetVersionInfo(ApplicationRelease currentRelease, ApplicationRelease newRelease, ApplicationInfo appInfo)
+    private string GetVersionInfo(ApplicationRelease newRelease, ApplicationInfo appInfo)
     {
-        var releases = appInfo.Releases.Where(a => a.Version > currentRelease.Version && a.Version <= newRelease.Version).OrderByDescending(a => a.Version);
-        StringBuilder sb = new StringBuilder();
+        var releases = appInfo.Releases.Where(a => a.Version > _application.Version && a.Version <= newRelease.Version).OrderByDescending(a => a.Version);
 
+        StringBuilder sb = new StringBuilder();
         foreach (var release in releases)
         {
             sb.AppendLine($"Вер.: {release.Version.ToFormattedString()}, {release.ReleaseDate:dd.MM.yyyy}");
@@ -67,88 +90,65 @@ internal class DialogProvider
 
             foreach (var group in release.Details.GroupBy(a => a.Kind))
             {
-                sb.AppendLine(GetDetailKindValue(group.Key))
-                  .AppendLine(string.Join(Environment.NewLine, group.Select(a => $"  {a.Description}")))
+                sb.AppendLine(group.Key.ToValueString())
+                  .Append(string.Join(Environment.NewLine, group.Select(a => $"  {a.Description}")))
                   .AppendLine();
             }
             sb.AppendLine();
         }
-
         return sb.ToString();
     }
-
-    private static string GetDetailKindValue(DetailKind kind) => kind switch
+    private UpdateInfoDialog BuildUpdateInfoDialog(IUpdate update)
     {
-        DetailKind.Changed => "Изменения:",
-        DetailKind.Fixed => "Исправления:",
-        DetailKind.Updated => "Обновления:",
-        _ => kind.ToString()
-    };
-
-    internal bool ShowUpdateInfoDialog(IUpdatableApplication application, DownloadUpdateRequest request) => (bool)this._owner.Invoke(() =>
-    {
-        var installedRelease = request.AppInfo.Releases.First(a => a.Version == application.Version);
-        UpdateInfoDialog dialog = new UpdateInfoDialog
+        var installedRelease = update.AppInfo.Releases.First(a => a.Version == _application.Version);
+        return new UpdateInfoDialog
         {
-            Text = $"{application.ApplicationName} Installer",
-            ApplicationName = application.ApplicationName,
-            UpdateVersion = request.Release.Version.ToFormattedString(),
-            UpdateSize = CalculateSize(request.ApplicationReleaseFile, request.ExtractorReleaseFile),
-            UpdateStatus = "Не запущено",
-            UpdateDetailsUri = application.DownloadPage,
-            CurrentVersion = application.Version.ToFormattedString(),
-            LastTimeUpdated = installedRelease.ReleaseDate.ToString("dd.MM.yyyy"),
-            UpdateDescription = GetVersionInfo(installedRelease, request.Release, request.AppInfo),
-            AttentionMessage = $"{application.ApplicationName} закроется автоматически",
-            NewFeatures = $"Новые возможности в версии {request.Release.Version}",
-
-            Owner = _owner,
-            Icon = application.MainWindow.Icon
-        };
-
-        return dialog.ShowDialog() == DialogResult.OK;
-    });
-    internal bool ShowUpdateInfoDialog(IUpdatableApplication application, DownloadedUpdate update) => (bool)this._owner.Invoke(() =>
-    {
-        var installedRelease = update.AppInfo.Releases.First(a => a.Version == application.Version);
-        UpdateInfoDialog dialog = new UpdateInfoDialog
-        {
-            Text = $"{application.ApplicationName} Installer",
-            ApplicationName = application.ApplicationName,
+            Text = $"{_application.ApplicationName} Installer",
+            ApplicationName = _application.ApplicationName,
+            NewFeatures = "Новые возможности в версии " + update.Release.Version.ToFormattedString(),
             UpdateVersion = update.Release.Version.ToFormattedString(),
-            UpdateSize = CalculateSize(update.ApplicationReleaseFile, update.ExtractorReleaseFile),
-            UpdateStatus = "Готово к установке",
-            UpdateDetailsUri = application.DownloadPage,
-            CurrentVersion = application.Version.ToFormattedString(),
+            UpdateSize = FilesService.FormatBytes(update.ApplicationReleaseFile.Size + update.ExtractorReleaseFile.Size, 1, true),
+            UpdateStatus = "Не запущено",
+            UpdateDetailsUri = _application.DownloadPage,
+            CurrentVersion = _application.Version.ToFormattedString(),
             LastTimeUpdated = installedRelease.ReleaseDate.ToString("dd.MM.yyyy"),
-            UpdateDescription = GetVersionInfo(installedRelease, update.Release, update.AppInfo),
-            AttentionMessage = $"{application.ApplicationName} закроется автоматически",
-            NewFeatures = $"Новые возможности в версии {update.Release.Version}",
+            UpdateDescription = GetVersionInfo(update.Release, update.AppInfo),
 
-            Owner = _owner,
-            Icon = application.MainWindow.Icon
+            Owner = DialogsOwner,
+            Icon = DialogsOwner.Icon
         };
-
-        return dialog.ShowDialog() == DialogResult.OK;
-    });
-    private static string CalculateSize(params ReleaseFile[] files)
-    {
-        return Extentions.FileSizeExtention.FormatBytes(files.Sum(a => a.Size), 1, true);
     }
-
-    internal void ShowMessageYouUseLastVersion(IUpdatableApplication application)
+    internal DeploymentOrder ShowUpdateInfoDialog(DownloadUpdateRequest request) => (DeploymentOrder)this.DialogsOwner.Invoke(() =>
     {
-        string m = $"Вы используете последнюю версию {application.ApplicationName}.\nТекущая версия: {application.Version.ToFormattedString()}";
-        this.ShowMessage(m, "Обновление");
-    }
+        UpdateInfoDialog dialog = BuildUpdateInfoDialog(request);
 
-    internal bool ShowQuestion(string message, string caption)
-    {
-        bool result = (bool)this._owner.Invoke(() =>
+        bool isCritical = request.Release.Kind == ReleaseKind.Critical;
+
+        if (isCritical)
         {
-            return MessageBox.Show(message, caption, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
-        });
-        return result;
+            dialog.NewFeatures = "Срочное обновление, версия " + request.Release.Version.ToFormattedString();
+            dialog.UpdateStatus = "Обновление будет установлено после выхода из программы";
+        }
 
-    }
+        if(dialog.ShowDialog() == DialogResult.OK)
+            return DeploymentOrder.Immediately;
+
+        return isCritical ? DeploymentOrder.Quietly : DeploymentOrder.NoUpdate;
+    });
+    internal DeploymentOrder ShowUpdateInfoDialog(DownloadedUpdate update) => (DeploymentOrder)this.DialogsOwner.Invoke(() =>
+    {
+        UpdateInfoDialog dialog = BuildUpdateInfoDialog(update);
+        dialog.UpdateStatus = "Обновление будет установлено после выхода из программы";
+
+        if (update.Release.Kind == ReleaseKind.Critical)
+            dialog.NewFeatures = "Срочное обновление, версия " + update.Release.Version.ToFormattedString();
+
+        return dialog.ShowDialog() == DialogResult.OK
+        ? DeploymentOrder.Immediately
+        : DeploymentOrder.Quietly;
+    });
+    internal bool ShowQuestion(string message, string caption) => (bool)this.DialogsOwner.Invoke(() =>
+    {
+        return MessageBox.Show(message, caption, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+    });
 }

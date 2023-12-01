@@ -3,7 +3,7 @@ using System.IO;
 using OohelpWebApps.Software.Updater.Common;
 
 namespace OohelpWebApps.Software.Updater;
-internal class DownloadedUpdate
+internal class DownloadedUpdate : IUpdate
 {
     public ApplicationInfo AppInfo { get; set; }
     public ApplicationRelease Release { get; set; }
@@ -23,8 +23,8 @@ internal class DownloadedUpdate
 
     internal void OnApplicationExit(object sender, EventArgs e)
     {
-        var executablePath = Process.GetCurrentProcess().MainModule.FileName;
-        var extractionPath = System.IO.Path.GetDirectoryName(executablePath);
+        var executablePath = Environment.ProcessPath;
+        var extractionPath = Path.GetDirectoryName(executablePath);
 
         var arguments = $"\"{ApplicationPascagePath}\" \"{extractionPath}\" \"{executablePath}\" {(this.StartApplicationAfterDeployment ? "y" : "n")}";
 
@@ -38,6 +38,8 @@ internal class DownloadedUpdate
         Process.Start(processStartInfo);
     }
     public override string ToString() =>
-        $"PascagePath: {this.ApplicationPascagePath}\nExtractorPath: {this.ExtractorPath}\nStartApplicationAfterDeployment: {this.StartApplicationAfterDeployment}";
+        $"PascagePath: {this.ApplicationPascagePath}" +
+        $"\nExtractorPath: {this.ExtractorPath}" +
+        $"\nStartApplicationAfterDeployment: {this.StartApplicationAfterDeployment}";
     
 }

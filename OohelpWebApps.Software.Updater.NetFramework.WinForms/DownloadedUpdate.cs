@@ -4,7 +4,7 @@ using System.IO;
 using OohelpWebApps.Software.Updater.Common;
 
 namespace OohelpWebApps.Software.Updater;
-internal class DownloadedUpdate
+internal class DownloadedUpdate : IUpdate
 {
     public ApplicationInfo AppInfo { get; set; }
     public ApplicationRelease Release { get; set; }

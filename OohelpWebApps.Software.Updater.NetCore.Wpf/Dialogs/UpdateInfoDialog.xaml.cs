@@ -18,7 +18,7 @@ public partial class UpdateInfoDialog : Window
     public Uri UpdateDetailsUri { get; set; }
     public string CurrentVersion { get; set; }
     public string LastTimeUpdated { get; set; }
-    public string UpdateFeaturesHeader => "Новые возможности в версии " + this.UpdateVersion;
+    public string UpdateFeaturesHeader { get; set; }
     public string UpdateDescription { get; set; }
     public string AttentionText => this.ApplicationName + " закроется автоматически.";
 

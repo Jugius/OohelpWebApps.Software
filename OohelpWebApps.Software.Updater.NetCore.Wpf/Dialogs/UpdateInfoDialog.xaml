@@ -43,10 +43,10 @@
 
                     <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding UpdateVersion}" d:Text="17.3.2" Margin="0,13,0,0"/>
                     <TextBlock Grid.Column="2" Grid.Row="2" Text="{Binding UpdateSize}" d:Text="526 МБ" Margin="0,13,0,0"/>
-                    <TextBlock Grid.Column="2" Grid.Row="3" Text="{Binding UpdateStatus}" d:Text="Не запущено" Margin="0,13,0,0"/>
+                    <TextBlock Grid.Column="2" Grid.Row="3" TextWrapping="Wrap" Text="{Binding UpdateStatus}" d:Text="Обновление будет выполнено после завершения программы" Margin="0,13,0,0"/>
 
                     <TextBlock Grid.Column="1" Grid.Row="4" Margin="0,13,0,0">
-                    <Hyperlink NavigateUri="{Binding UpdateDetailsUri}">Заметки о выпуске</Hyperlink>
+                    <Hyperlink NavigateUri="{Binding UpdateDetailsUri}">Страница загрузки</Hyperlink>
                     </TextBlock>
 
                     <Border Grid.Column="1" Grid.Row="5" Grid.ColumnSpan="2" Height="1" Background="LightGray" VerticalAlignment="Stretch" Margin="0,13,20,0"/>

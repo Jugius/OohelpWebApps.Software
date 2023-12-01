@@ -1,5 +1,4 @@
-﻿using System.IO;
-using OohelpWebApps.Software.Updater.Common;
+﻿using OohelpWebApps.Software.Updater.Common;
 using OohelpWebApps.Software.Updater.Common.Enums;
 using OohelpWebApps.Software.Updater.Dialogs;
 using OohelpWebApps.Software.Updater.Extentions;
@@ -8,21 +7,19 @@ using OohelpWebApps.Software.Updater.Services;
 namespace OohelpWebApps.Software.Updater;
 public sealed class ApplicationDeployment
 {
-    private const string ExtractorApplicationName = "ZipExtractor";
-
     private readonly ApiSoftwareService _apiSoftwareService;
     private readonly IUpdatableApplication _application;
     private readonly RuntimeVersion _runtimeVersion;
     private readonly DialogProvider _dialogProvider;
 
-    private DownloadedUpdate _downloadedUpdate;    
+    private DownloadedUpdate _downloadedUpdate;
 
     public ApplicationDeployment(IUpdatableApplication application)
     {
         this._application = application;
-        this._runtimeVersion = GetRunningRuntimeVersion();
-        this._apiSoftwareService = new ApiSoftwareService(application.UpdatesServerPath);
-        this._dialogProvider = new DialogProvider(application.MainWindow);
+        this._runtimeVersion = GetApplicationRuntimeVersion();
+        this._apiSoftwareService = new ApiSoftwareService(application.UpdatesServer);
+        this._dialogProvider = new DialogProvider(application);
     }
     /// <summary>
     /// Процедура по умолчанию, проверяем наличие обновлений, если есть то загружаем и ждем завершение приложения.
@@ -32,180 +29,109 @@ public sealed class ApplicationDeployment
     {
         if (method == UpdateMethod.NoUpdate) return;
 
-        bool showMessages = method == UpdateMethod.Manual;
-
         var result = await _apiSoftwareService.GetApplicationInfo(this._application.ApplicationName, this._application.Version);
+
         if (!result.IsSuccess)
         {
-            if (showMessages)
-                this._dialogProvider.ShowException(result.Error.Message, "Ошибка проверки обновления");
-
+            this._dialogProvider.ShowException_SearchUpdateError(result.Error, method);
             return;
         }
 
-        var appInfo = result.Value;
+        var app = result.Value;
 
-        if (appInfo.Releases.Count > 1)
+        if (!app.HasNewerVersion(this._application.Version))
         {
-            await ProcessNewApplicationRelease(appInfo, method);
+            this._dialogProvider.ShowMessage_YouUseLastVersion(method);
+            return;
         }
-        else
-        {
-            if (showMessages)
-            {
-                this._dialogProvider.ShowMessageYouUseLastVersion(this._application);
-            }
-        }        
+
+        await OnNewApplicationVersionFound(result.Value, method);
     }
 
-    private void FindReleaseWithNewerRuntimeVersionAndProposeDownload(ApplicationInfo appInfo, UpdateMethod method)
+    private async Task OnNewApplicationVersionFound(ApplicationInfo appInfo, UpdateMethod method)
     {
+        if (appInfo.TryGetSuitableReleaseToUpdate(_application.Version, _runtimeVersion, out ApplicationRelease release))
+        {
+            await ProcessNewApplicationRelease(appInfo, release, method);
+            return;
+        }
+
         if (method != UpdateMethod.Manual) return;
 
-        var release = GetNewestNextRuntimeRelease(appInfo.Releases);
-        if (release == null)
-        {
-            this._dialogProvider.ShowMessageYouUseLastVersion(this._application);
-        }
-        else
-        {
-            var file = release.Files.FirstOrDefault(a => a.Kind == FileKind.Install);
+        if (!appInfo.TryGetSuitableReleaseToInstall(_application.Version, _runtimeVersion, out release)) return;
 
-            string message = $"Приложение {_application.ApplicationName} работает на {_runtimeVersion}. Обнаружена новая версия {release.Version.ToFormattedString()}, для работы которой необходим {file.RuntimeVersion}.\n\nПерейти на страницу для загрузки обновления?";
+        var file = release.Files.GetSuitableFileToInstall(this._runtimeVersion);
 
-            if (_dialogProvider.ShowQuestion(message, $"Обновление {_application.ApplicationName}"))
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "", UseShellExecute = true });
+        string message = $"Приложение {_application.ApplicationName} использует для работы {_runtimeVersion}.\nОбнаружена новая версия {release.Version.ToFormattedString()}, для работы которой необходим {file.RuntimeVersion}.\n\nПерейти на страницу для загрузки обновления?";
+
+        if (this._application.DownloadPage != null &&
+            _dialogProvider.ShowQuestion(message, $"Обновление {_application.ApplicationName}"))
+        {
+            System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = this._application.DownloadPage.ToString(),
+                    UseShellExecute = true
+                });
         }
     }
-    private async Task ProcessNewApplicationRelease(ApplicationInfo appInfo, UpdateMethod method)
+    private async Task ProcessNewApplicationRelease(ApplicationInfo appInfo, ApplicationRelease release, UpdateMethod method)
     {
-        var release = GetNewestSameRuntimeRelease(appInfo.Releases);// ?? 
-
-        if (release == null)
+        if (IsUpdatePreparedToDeploy(release.Version))
         {
-            FindReleaseWithNewerRuntimeVersionAndProposeDownload(appInfo, method);
+            var order = GetDeploymentOrder(this._downloadedUpdate, method, null);
+            ProcessDownloadedUpdate(order);
             return;
         }
 
-        if (this._downloadedUpdate != null)
-        {
-            if (release.Version > this._downloadedUpdate.Release.Version) // свежезагруженный манифест новее, чем приготовленный к установке
-            {
-                this._downloadedUpdate.Clear();
-                AppDomain.CurrentDomain.ProcessExit -= this._downloadedUpdate.OnApplicationExit;
-                this._downloadedUpdate = null;
-            }
-            else
-            {
-                if (method == UpdateMethod.Automatic)
-                {
-                    ProcessDownloadedUpdate(false);
-                }
-                else
-                {
-                    ProcessDownloadedUpdate(null);
-                }
-                
-                return;
-            }
-        }        
-        
-        var requestResult = await PrepareDownloadRequest(appInfo, release);
-        if (!requestResult.IsSuccess)
-        {
-            if (method == UpdateMethod.Manual)
-            {
-                string message = $"Обнаружена новая версия {release.Version.ToFormattedString()}, " + 
-                    "но не удалось получить информацию о загрузке.\n" +
-                    "Вы можете повторить позже.\n\n" + 
-                    "Ошибка: " + requestResult.Error.Message;
+        var appFile = release.Files.GetSuitableFileToUpdate(this._runtimeVersion);
+        var getExtractorFileResult = await _apiSoftwareService.GetExtractorFile(appFile.RuntimeVersion);
 
-                this._dialogProvider.ShowException(message, "Ошибка загрузки обновления");
-            }
+        if (!getExtractorFileResult.IsSuccess)
+        {
+            this._dialogProvider.ShowException_GetExtractorError(getExtractorFileResult.Error, release.Version, method);
             return;
         }
 
-        bool showMessages = (UpdateMethod.Manual | UpdateMethod.DownloadAndUpdateOnRequest).HasFlag(method);
-        bool resume = true;
-
-        DownloadUpdateRequest downloadUpdateRequest = requestResult.Value;
-
-        if (showMessages)
+        DownloadUpdateRequest request = new DownloadUpdateRequest
         {
-            resume = this._dialogProvider.ShowUpdateInfoDialog(this._application, downloadUpdateRequest);
-        }
+            AppInfo = appInfo,
+            Release = release,
+            ApplicationReleaseFile = appFile,
+            ExtractorReleaseFile = getExtractorFileResult.Value
+        };
 
-        if (!resume) return;
+        await ProcessDownloadUpdateRequest(request, method);
+    }
+    private async Task ProcessDownloadUpdateRequest(DownloadUpdateRequest request, UpdateMethod method)
+    {
+        var order = GetDeploymentOrder(request, method);
+        if (order.Command == UpdateCommand.NoUpdate) return;
 
-        DownloadedUpdate update = await DownloadUpdate(downloadUpdateRequest, showMessages);
+        DownloadedUpdate update = await DownloadUpdate(request, order.Command == UpdateCommand.UpdateImmediately);
 
         if (update == null) return;
 
         this._downloadedUpdate = update;
         AppDomain.CurrentDomain.ProcessExit += this._downloadedUpdate.OnApplicationExit;
 
-        
-        if (method == UpdateMethod.Automatic)
-        {
-            ProcessDownloadedUpdate(false);
-        }
-        else if (method == UpdateMethod.Manual || method == UpdateMethod.DownloadAndUpdateOnRequest)
-        {
-            ProcessDownloadedUpdate(true);
-        }
-        else if (method == UpdateMethod.AutomaticDownload_UpdateOnRequest)
-        {
-            ProcessDownloadedUpdate(null);
-        }
-        
-    }
-
-    private ApplicationRelease GetNewestSameRuntimeRelease(IEnumerable<ApplicationRelease> releases)
-    {
-        return releases
-            .Where(a => a.Files.Any(f => f.RuntimeVersion == this._runtimeVersion && f.Kind == FileKind.Update) && a.Version > this._application.Version)
-            .MaxBy(a => a.Version);        
-    }
-
-    private ApplicationRelease GetNewestNextRuntimeRelease(IEnumerable<ApplicationRelease> releases)
-    {
-        return releases
-            .Where(a => a.Files.Any(f => f.RuntimeVersion > this._runtimeVersion && f.Kind == FileKind.Install) && a.Version > this._application.Version)
-            .MaxBy(a => a.Version);
-    }
-
-    private async Task<OperationResult<DownloadUpdateRequest>> PrepareDownloadRequest(ApplicationInfo appInfo, ApplicationRelease appRelease)
-    {
-        var appFile = appRelease.Files?.FirstOrDefault(a => a.Kind == FileKind.Update);
-        
-        var extractorAppResult = await _apiSoftwareService.GetApplicationInfo(ExtractorApplicationName, null);
-        if (!extractorAppResult.IsSuccess)
-            return new Exception("Ошибка поиска экстрактора: " + extractorAppResult.Error.Message);
-
-
-        var extractorRelease = extractorAppResult.Value.Releases
-            .Where(r => r.Files.Any(f => f.Kind == FileKind.Install && f.RuntimeVersion == _runtimeVersion))
-            .MaxBy(r => r.Version);
-            
-        if (extractorRelease == null)
-            return new Exception("В информации об экстракторе отсутствует адрес файла.");
-
-        var extractorFile = extractorRelease.Files.First(f => f.Kind == FileKind.Install && f.RuntimeVersion == _runtimeVersion);
-
-        return new DownloadUpdateRequest
-        {
-            AppInfo = appInfo,
-            Release = appRelease,
-            ApplicationReleaseFile = appFile,
-            ExtractorReleaseFile = extractorFile,
-        };
+        order = GetDeploymentOrder(this._downloadedUpdate, method, order);
+        ProcessDownloadedUpdate(order);
     }    
-
-    private async Task<DownloadedUpdate> DownloadUpdate(DownloadUpdateRequest updateRequest, bool showMessages)
+    private void ProcessDownloadedUpdate(DeploymentOrder order)
     {
-        if (showMessages)
+        this._downloadedUpdate.StartApplicationAfterDeployment = order.StartApplicationAfterDeployment;
+
+        if (order.Command == UpdateCommand.UpdateImmediately)
         {
-            return this._dialogProvider.ShowUpdateDownloadDialog(this._application, updateRequest, this._apiSoftwareService);
+            ShutdownApplication();
+        }
+    }
+    private async Task<DownloadedUpdate> DownloadUpdate(DownloadUpdateRequest updateRequest, bool showDialogs)
+    {
+        if (showDialogs)
+        {
+            return this._dialogProvider.ShowUpdateDownloadDialog(updateRequest, this._apiSoftwareService);
             //throw new NotImplementedException();
         }
 
@@ -228,62 +154,62 @@ public sealed class ApplicationDeployment
         }
         return null;
     }
-
-    private void ProcessDownloadedUpdate(bool? restartImmediately)
-    {
-        bool restartApp = false;
-        if (restartImmediately.HasValue)
-        {
-            this._downloadedUpdate.StartApplicationAfterDeployment = restartApp = restartImmediately.Value;            
-        }
-        else
-        {
-            this._downloadedUpdate.StartApplicationAfterDeployment = restartApp =
-                this._dialogProvider.ShowUpdateInfoDialog(this._application, this._downloadedUpdate);
-        }
-
-        if (restartApp)
-        {
-            this._application.MainWindow.Dispatcher.Invoke(() =>
-            {
-                System.Windows.Application.Current.Shutdown();
-            });
-        }
-    }  
     private async Task<OperationResult<string>> SaveFileToUpdateFolder(ReleaseFile releaseFile)
     {
-        const string UPDATE_DIRECTORY_NAME = "updates";
+        var downloadresult = await _apiSoftwareService.DownloadToTempFile(releaseFile);
+        if (!downloadresult.IsSuccess) return downloadresult.Error;
 
-        var downloadresult = await _apiSoftwareService.DownloadToTempFile(releaseFile.Id);
-        if (!downloadresult.IsSuccess)
-            return new Exception($"Ошибка загрузки файла {releaseFile.Name}: " + downloadresult.Error.Message);
+        string tempFile = downloadresult.Value;
 
-        var hash = await FilesService.ComputeFileHash(downloadresult.Value);
-        if (!string.Equals(hash, releaseFile.CheckSum, StringComparison.OrdinalIgnoreCase))
+        if (!await FilesService.VerifyChecksum(tempFile, releaseFile.CheckSum))
             return new Exception($"Ошибка проверки файла {releaseFile.Name}: не совпадает контрольная сумма");
-
-        string destFolder = Path.Combine(AppContext.BaseDirectory, UPDATE_DIRECTORY_NAME);
-        if (!Directory.Exists(destFolder))
-            Directory.CreateDirectory(destFolder);
 
         try
         {
-            string destFile = Path.Combine(destFolder, releaseFile.Name);
-
-            if (File.Exists(destFile))
-                File.Delete(destFile);
-
-            File.Move(downloadresult.Value, destFile);
-
-            return destFile;
+            return FilesService.MoveFileToUpdateDirectory(tempFile, releaseFile.Name);
         }
         catch (Exception ex)
         {
-            return new Exception($"Ошибка переноса файла {releaseFile.Name}: " + ex.GetBaseException().Message);
+            return ex;
         }
+    }
 
-    } 
-    public static RuntimeVersion GetRunningRuntimeVersion()
+    private DeploymentOrder GetDeploymentOrder(DownloadUpdateRequest request, UpdateMethod method) =>
+        method == UpdateMethod.Manual || method == UpdateMethod.DownloadAndUpdateOnRequest
+        ? this._dialogProvider.ShowUpdateInfoDialog(request)
+        : DeploymentOrder.Quietly;
+
+
+    private DeploymentOrder GetDeploymentOrder(DownloadedUpdate update, UpdateMethod method, DeploymentOrder order = null) => method switch
+    {
+        UpdateMethod.Manual => order ?? this._dialogProvider.ShowUpdateInfoDialog(update),
+
+        UpdateMethod.AutomaticDownload_UpdateOnRequest => order == null
+        ? DeploymentOrder.Quietly
+        : this._dialogProvider.ShowUpdateInfoDialog(update),
+
+        UpdateMethod.DownloadAndUpdateOnRequest => order == null
+        ? DeploymentOrder.Quietly
+        : DeploymentOrder.Immediately,
+
+        _ => DeploymentOrder.Quietly
+    };
+    
+    private bool IsUpdatePreparedToDeploy(Version version)
+    {
+        if (this._downloadedUpdate == null) return false;
+
+        if (this._downloadedUpdate.Release.Version < version) // свежезагруженный манифест новее, чем приготовленный к установке
+        {
+            this._downloadedUpdate.Clear();
+            AppDomain.CurrentDomain.ProcessExit -= this._downloadedUpdate.OnApplicationExit;
+            this._downloadedUpdate = null;
+            return false;
+        }
+        return true;
+    }  
+    
+    internal static RuntimeVersion GetApplicationRuntimeVersion()
     {
         var netVer = Environment.Version;
 
@@ -296,13 +222,29 @@ public sealed class ApplicationDeployment
 
         return RuntimeVersion.NetFramework;
     }
-
-    public string GetStatus()
+    private void ShutdownApplication()
     {
-        if (this._downloadedUpdate == null)
-            return "None";
+        this._application.MainWindow.Dispatcher.Invoke(() =>
+        {
+            System.Windows.Application.Current.Shutdown();
+        });
+    }
+    public override string ToString()
+    {
+        string status = $"Application: {this._application.ApplicationName}" +
+            $"\nVersion: {this._application.Version.ToFormattedString()}" +
+            $"\nRuntime: {this._runtimeVersion}";
 
-        return $"Downloaded version: {this._downloadedUpdate.Release.Version.ToFormattedString()}\n" +
+        if (this._downloadedUpdate == null)
+        {
+            status += "\n\nNo updates downloaded.";
+        }
+        else
+        { 
+            status += $"\n\nDownloaded update version: {this._downloadedUpdate.Release.Version.ToFormattedString()}\n" +
             $"{this._downloadedUpdate}";
+        }
+
+        return status ;
     }
 }
