@@ -231,7 +231,7 @@ namespace SoftwareManager
             try
             {
                 await ApplicationsService.DownloadFile(file, filePath);
-                this.DialogProvider.ShowFileInExplorer(filePath);
+                this.DialogProvider.SelectFileInExplorer(filePath);
             }
             catch (System.Exception ex)
             {
@@ -296,7 +296,7 @@ namespace SoftwareManager
             try
             {
                 await ApplicationsService.SaveJson(file);
-                this.DialogProvider.ShowFileInExplorer(file);
+                this.DialogProvider.SelectFileInExplorer(file);
             }
             catch (System.Exception ex)
             {
