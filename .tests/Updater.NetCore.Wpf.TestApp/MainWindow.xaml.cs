@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using OohelpWebApps.Software.Updater;
@@ -17,9 +18,9 @@ public partial class MainWindow : Window, IUpdatableApplication
         this.applicationDeployment = new ApplicationDeployment(this);
     }   
     
-
+    private readonly Version version = ApplicationDeployment.GetApplicationVersion(Assembly.GetExecutingAssembly());
     public string ApplicationName => "OohPanel";
-    public Version Version { get; } = new Version(1, 8, 6);
+    public Version Version => version;
     public Uri UpdatesServer { get; } = new Uri("https://localhost:7164"); // new Uri("https://software.oohelp.net");
     Window IUpdatableApplication.MainWindow => this;
     public Uri DownloadPage { get; } = new Uri("https://oohelp.net");

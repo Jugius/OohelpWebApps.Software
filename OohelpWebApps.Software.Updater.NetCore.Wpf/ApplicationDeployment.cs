@@ -1,4 +1,5 @@
-﻿using OohelpWebApps.Software.Updater.Common;
+﻿using System.Reflection;
+using OohelpWebApps.Software.Updater.Common;
 using OohelpWebApps.Software.Updater.Common.Enums;
 using OohelpWebApps.Software.Updater.Dialogs;
 using OohelpWebApps.Software.Updater.Extentions;
@@ -221,6 +222,19 @@ public sealed class ApplicationDeployment
         if (ver >= 50) return RuntimeVersion.Net5;
 
         return RuntimeVersion.NetFramework;
+    }
+
+    public static Version GetApplicationVersion(Assembly assembly)
+    {
+        var version = assembly.GetName().Version;
+
+        if (version.Revision > 0)
+            return new Version(version.Major, version.Minor, version.Build, version.Revision);
+
+        if (version.Build > 0)
+            return new Version(version.Major, version.Minor, version.Build);
+
+        return new Version(version.Major, version.Minor);
     }
     private void ShutdownApplication()
     {
