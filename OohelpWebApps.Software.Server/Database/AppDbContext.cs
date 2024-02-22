@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OohelpWebApps.Software.Server.Database.DataConverters;
 using OohelpWebApps.Software.Server.Database.DTO;
 
 namespace OohelpWebApps.Software.Server.Database;
@@ -13,15 +12,6 @@ public class AppDbContext : DbContext
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
-        //Database.EnsureDeleted();
-        //Database.EnsureCreated();
-    }
-    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
-    {
-        configurationBuilder.Properties<DateOnly>()
-          .HaveConversion<DateOnlyConverter, DateOnlyComparer>()
-          .HaveColumnType("date");
-        //base.ConfigureConventions(configurationBuilder);
-    }
 
+    }
 }
