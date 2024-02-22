@@ -8,6 +8,7 @@ public class AppSettings
     public string Password { get; set; } = string.Empty;
     public string AuthenticationApiServer { get; set; }
     public string SoftwareApiServer { get; set; }
+    public string Token {  get; set; }
     public static class Application
     {
         public static string Name => "SoftwareManager";
