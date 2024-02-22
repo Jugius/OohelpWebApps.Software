@@ -98,7 +98,8 @@ internal class DialogProvider
     
     private UpdateInfoDialog BuildUpdateInfoDialog(IUpdate update)
     {
-        var installedRelease = update.AppInfo.Releases.First(a => a.Version == _application.Version);
+        var installedRelease = update.AppInfo.Releases.FirstOrDefault(a => a.Version == _application.Version) 
+            ?? update.AppInfo.Releases.Where(a => a.Version > _application.Version).MinBy(a => a.Version);
         return new UpdateInfoDialog
         {
             Title = $"{_application.ApplicationName} Installer",
