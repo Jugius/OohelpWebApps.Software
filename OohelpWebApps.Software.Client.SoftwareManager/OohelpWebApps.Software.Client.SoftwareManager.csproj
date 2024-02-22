@@ -2,12 +2,14 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net7.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <LangVersion>12.0</LangVersion>
     <Nullable>disable</Nullable>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Resources\icon_api.ico</ApplicationIcon>
     <RootNamespace>SoftwareManager</RootNamespace>
+    <AssemblyName>SoftwareManager</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,7 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--<PackageReference Include="OohelpSoft.LibControls.Core.WPF" Version="1.1.0" />-->
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
     <PackageReference Include="Telerik.Windows.Controls.for.Wpf.Xaml" Version="2023.2.718" />
     <PackageReference Include="Telerik.Windows.Controls.GridView.for.Wpf.Xaml" Version="2023.2.718" />
