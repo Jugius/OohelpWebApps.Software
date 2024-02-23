@@ -1,20 +1,9 @@
 ﻿namespace OohelpWebApps.Software.Domain;
 
 public enum DetailKind
-{
-    /// <summary>
-    /// Исправления программы
-    /// </summary>
-    Fixed = 50,
-
-    /// <summary>
-    /// Изменения функционала программы
-    /// </summary>
-    Changed = 70,
-
-
-    /// <summary>
-    /// Обновление библиотек и фреймворков 
-    /// </summary>
-    Updated = 90,
+{    
+    Fixed = 50, // when fixet bug
+    Changed = 70, // when changed some logic
+    Updated = 90, // when updated some controles or packages
+    Implemented = 110 // when new feature has been implemented
 }

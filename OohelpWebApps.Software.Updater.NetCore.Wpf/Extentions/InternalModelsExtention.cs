@@ -31,6 +31,7 @@ internal static class InternalModelsExtention
         DetailKind.Changed => "Изменения:",
         DetailKind.Fixed => "Исправления:",
         DetailKind.Updated => "Обновления:",
+        DetailKind.Implemented => "Новое:",
         _ => kind.ToString()
     };
     public static ReleaseFile GetSuitableFileToUpdate(this IEnumerable<ReleaseFile> files, RuntimeVersion runtimeVersion) =>

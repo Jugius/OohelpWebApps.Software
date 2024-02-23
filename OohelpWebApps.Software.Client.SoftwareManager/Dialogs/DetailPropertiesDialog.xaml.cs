@@ -23,6 +23,7 @@ namespace SoftwareManager.Dialogs
         {            
             cmbKinds.ItemsSource = new List<DetailKind> 
             {
+                DetailKind.Implemented,
                 DetailKind.Changed,
                 DetailKind.Fixed,
                 DetailKind.Updated 
