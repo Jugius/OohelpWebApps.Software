@@ -1,4 +1,6 @@
 ﻿using System.Windows;
+using SoftwareManager.Services;
+using SoftwareManager.ViewModels;
 
 namespace SoftwareManager;
 
@@ -9,10 +11,13 @@ public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
-        var mainWindow = new MainWindow();
-        this.MainWindow = mainWindow;
+        this.MainWindow = new MainWindow();
+        var service = new ApiClientService();
+        var dialogsProvider = new DialogsProvider(this.MainWindow);
+        var mainViewModel = new MainWindowViewModel(service, dialogsProvider);
+        this.MainWindow.DataContext = mainViewModel;
         this.MainWindow.Show();
-        mainWindow.ReloadDataset.Execute(null);
+        MainWindow.Dispatcher.Invoke(service.ReloadDataset);
         base.OnStartup(e);
     }
 }
