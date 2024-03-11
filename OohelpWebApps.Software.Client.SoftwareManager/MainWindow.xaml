@@ -41,14 +41,7 @@
             </Button>
             <Button Command="{Binding RemoveApplication}" CommandParameter="{Binding ElementName=comboApplications, Path=SelectedItem}" Margin="2" Background="Transparent" BorderBrush="Transparent">
                 <Image Source="Resources/icon_remove_48px.png" Stretch="Fill" Width="24" Height="24"/>
-            </Button>
-            <Border Width="1" Margin="3,2" Background="#B8D5E4"/>
-            <Button Command="{Binding SaveJson}" Margin="2" Background="Transparent" BorderBrush="Transparent">
-                <Image Source="Resources/icon_json_48px_.png" Stretch="Fill" Width="24" Height="24"/>
-            </Button>
-            <Button Command="{Binding OpenJson}" Margin="2" Background="Transparent" BorderBrush="Transparent">
-                <Image Source="Resources/icon_json_save_48px.png" Stretch="Fill" Width="24" Height="24"/>
-            </Button>
+            </Button>      
             <Border Width="1" Margin="3,2" Background="#B8D5E4"/>
             <Button Command="{Binding ShowAppSettings}" Margin="2" Background="Transparent" BorderBrush="Transparent">
                 <Image Source="/Resources/icon_settings_48px.png" Stretch="Fill" Width="24" Height="24"/>
