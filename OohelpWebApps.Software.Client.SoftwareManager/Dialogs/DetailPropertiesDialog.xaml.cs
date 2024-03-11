@@ -1,7 +1,9 @@
 ﻿using OohelpWebApps.Software.Domain;
+using SoftwareManager.ViewModels;
 using SoftwareManager.ViewModels.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 
 
@@ -11,7 +13,7 @@ namespace SoftwareManager.Dialogs
     /// Interaction logic for DetailPropertiesDialog.xaml
     /// </summary>
     public partial class DetailPropertiesDialog : Window
-    {
+    {        
         private readonly DialogVM _model;
         public ReleaseDetailVM ReleaseDetail { get; private set; }
 
@@ -21,13 +23,6 @@ namespace SoftwareManager.Dialogs
         }
         public DetailPropertiesDialog(ReleaseDetailVM detail) : this()
         {            
-            cmbKinds.ItemsSource = new List<DetailKind> 
-            {
-                DetailKind.Implemented,
-                DetailKind.Changed,
-                DetailKind.Fixed,
-                DetailKind.Updated 
-            };
             this.DataContext = _model = new DialogVM(detail);
         }
 
@@ -44,18 +39,24 @@ namespace SoftwareManager.Dialogs
             }            
         }
 
-        private sealed class DialogVM : ViewModels.Helpers.ViewModelBase
+        private sealed class DialogVM : ViewModelBase
         {
+            public record DetailKindVM(DetailKind Kind, string Name);
+            public List<DetailKindVM> DetailKinds { get; }
             public DialogVM(ReleaseDetailVM detail)
             {
+                this.DetailKinds = Enum.GetValues<DetailKind>()
+                    .Select(a => new DetailKindVM(a, ToValueString(a)))
+                    .ToList();
+
                 this.Id = detail.Id;
                 this.Description = detail.Description;
-                this.DetailKind = detail.Kind;
+                this.DetailKind = new DetailKindVM(detail.Kind, ToValueString(detail.Kind));
                 this.ReleaseId = detail.ReleaseId;
             }
-            private DetailKind detailKind;
+            private DetailKindVM detailKind;
             private string description;            
-            public DetailKind DetailKind { get => detailKind; set { detailKind = value; OnPropertyChanged(nameof(DetailKind)); } }
+            public DetailKindVM DetailKind { get => detailKind; set { detailKind = value; OnPropertyChanged(nameof(DetailKind)); } }
             public string Description { get => description; set { description = value; OnPropertyChanged(nameof(Description)); } }
 
             private Guid ReleaseId { get; }
@@ -71,9 +72,17 @@ namespace SoftwareManager.Dialogs
                     Id = this.Id,
                     Description = this.Description,
                     ReleaseId = this.ReleaseId,
-                    Kind = this.DetailKind,
+                    Kind = this.DetailKind.Kind,
                 };
             }
+            private static string ToValueString(DetailKind kind) => kind switch
+            {
+                OohelpWebApps.Software.Domain.DetailKind.Changed => "Изменения",
+                OohelpWebApps.Software.Domain.DetailKind.Fixed => "Исправления",
+                OohelpWebApps.Software.Domain.DetailKind.Updated => "Обновления",
+                OohelpWebApps.Software.Domain.DetailKind.Implemented => "Новое",
+                _ => kind.ToString()
+            };
         }
     }
 }

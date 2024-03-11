@@ -5,7 +5,7 @@ using OohelpWebApps.Software.Domain;
 
 namespace SoftwareManager.ViewModels.Entities;
 
-public class ReleaseFileVM : Helpers.ViewModelBase
+public class ReleaseFileVM : ViewModelBase
 {
     private string name;
     private FileKind kind;

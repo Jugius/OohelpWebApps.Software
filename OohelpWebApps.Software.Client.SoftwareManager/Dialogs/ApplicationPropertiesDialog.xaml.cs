@@ -1,4 +1,5 @@
 ﻿
+using SoftwareManager.ViewModels;
 using SoftwareManager.ViewModels.Entities;
 using System;
 using System.Windows;
@@ -23,7 +24,7 @@ namespace SoftwareManager.Dialogs
             this.DataContext = new ApplicationPropertiesDialogVM
             { Id = Guid.NewGuid() };
         }
-        private sealed class ApplicationPropertiesDialogVM : ViewModels.Helpers.ViewModelBase
+        private sealed class ApplicationPropertiesDialogVM : ViewModelBase
         {
             public Guid Id { get => id; set { id = value; OnPropertyChanged(nameof(Id)); } }
             private Guid id;

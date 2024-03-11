@@ -23,7 +23,7 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
             <TextBlock Margin="0,3" Text="Тип записи:" VerticalAlignment="Center"/>
-            <ComboBox Name="cmbKinds" Margin="0,3"  SelectedItem="{Binding DetailKind}" Grid.Column="1"/>
+            <ComboBox  Margin="0,3" ItemsSource="{Binding DetailKinds}" DisplayMemberPath="Name"  SelectedItem="{Binding DetailKind}" Grid.Column="1"/>
             <TextBox Grid.Row="1" Grid.ColumnSpan="2" Margin="0,3" Width="250" MinLines="2" Text="{Binding Description}" />
         </Grid>
         <Border Grid.Row="1" Height="1" Background="LightGray" VerticalAlignment="Stretch"></Border>

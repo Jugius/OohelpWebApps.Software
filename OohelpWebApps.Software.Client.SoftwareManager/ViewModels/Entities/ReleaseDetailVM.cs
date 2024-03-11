@@ -4,7 +4,7 @@ using OohelpWebApps.Software.Domain;
 
 namespace SoftwareManager.ViewModels.Entities;
 
-public class ReleaseDetailVM : Helpers.ViewModelBase
+public class ReleaseDetailVM : ViewModelBase
 {
     private DetailKind kind;
     private string description;

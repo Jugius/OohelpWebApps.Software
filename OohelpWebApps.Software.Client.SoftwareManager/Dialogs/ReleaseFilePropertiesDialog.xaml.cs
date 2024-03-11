@@ -1,4 +1,5 @@
 ﻿using OohelpWebApps.Software.Domain;
+using SoftwareManager.ViewModels;
 using SoftwareManager.ViewModels.Entities;
 using System;
 using System.Windows;
@@ -42,7 +43,7 @@ public partial class ReleaseFilePropertiesDialog : Window
         }
     }
 }
-public class ReleaseFileProperties : ViewModels.Helpers.ViewModelBase
+public class ReleaseFileProperties : ViewModelBase
 {
     private FileKind kind;
     private string description;

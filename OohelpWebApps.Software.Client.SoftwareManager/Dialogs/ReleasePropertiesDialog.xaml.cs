@@ -1,4 +1,5 @@
 ﻿using OohelpWebApps.Software.Domain;
+using SoftwareManager.ViewModels;
 using SoftwareManager.ViewModels.Entities;
 using System;
 using System.Collections.Generic;
@@ -57,7 +58,7 @@ namespace SoftwareManager.Dialogs
             _release = newRelease;
             this.DialogResult = true;
         }
-        private sealed class ReleasePropertiesDialogVM : ViewModels.Helpers.ViewModelBase
+        private sealed class ReleasePropertiesDialogVM : ViewModelBase
         {
             private int major;
             private int minor;

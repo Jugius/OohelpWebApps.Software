@@ -1,4 +1,5 @@
-﻿using OohelpWebApps.Software.Domain;
+﻿using OohelpSoft.Helpers.Result;
+using OohelpWebApps.Software.Domain;
 using SoftwareManager.Helpers;
 using SoftwareManager.Mapping;
 using SoftwareManager.ViewModels.Entities;
@@ -16,6 +17,14 @@ namespace SoftwareManager.Services
 {
     public class ApiClientService
     {
+        public event Action ApplicationsLoaded;
+        public event Action<ApplicationInfoVM> ApplicationCreated;
+        public event Action<ApplicationInfoVM> ApplicationDeleted;
+        public event Action<ApplicationReleaseVM> ReleaseCreated;
+        public event Action<ApplicationReleaseVM> ReleaseDeleted;
+
+        public event Action<Exception> LoadApplicationsErrorThrown;
+
         private readonly HttpClient _httpClient;
         private readonly ObservableCollection<ApplicationInfoVM> _applications  = new ObservableCollection<ApplicationInfoVM>();
         private bool _logined = false;
@@ -26,10 +35,14 @@ namespace SoftwareManager.Services
             _httpClient = new HttpClient();
             _httpClient.BaseAddress = GetBaseClientAddress();
         }
-        public async Task<ValueResult<bool>> ReloadDataset()
+        public async Task ReloadDataset()
         {
             var login = await Login();
-            if (!login.IsSuccess) return login.Error;
+            if (!login.IsSuccess)
+            {
+                this.LoadApplicationsErrorThrown?.Invoke(login.Error);
+                return;
+            }
 
             try
             {
@@ -40,15 +53,15 @@ namespace SoftwareManager.Services
                 foreach (var application in views)
                     this._applications.Add(application);
 
-                return true;
+                this.ApplicationsLoaded?.Invoke();
             }
             catch (Exception ex)
             {
-                return ex.GetBaseException();
+                this.LoadApplicationsErrorThrown?.Invoke(ex.GetBaseException());
             }            
         }
 
-        private async Task<ValueResult<bool>> Login()
+        private async Task<OperationResult<bool>> Login()
         {
             if (_logined) return true;
 
@@ -66,7 +79,7 @@ namespace SoftwareManager.Services
         }
 
         #region Applications CRUD Commands
-        internal async Task<ValueResult<ApplicationInfoVM>> Create(ApplicationInfoVM appInfo)
+        internal async Task<OperationResult> Create(ApplicationInfoVM appInfo)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -81,10 +94,11 @@ namespace SoftwareManager.Services
             var app = await response.Content.ReadFromJsonAsync<ApplicationInfo>();
             var result = app.ToModelView();
             _applications.Add(result);
-            return result;
+            this.ApplicationCreated?.Invoke(result);
+            return OperationResult.Success;
         }
 
-        internal async Task<ValueResult<ApplicationInfoVM>> Edit(ApplicationInfoVM appInfo)
+        internal async Task<OperationResult<ApplicationInfoVM>> Edit(ApplicationInfoVM appInfo)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -99,7 +113,7 @@ namespace SoftwareManager.Services
             return existing;
         }
 
-        internal async Task<ValueResult<bool>> Remove(ApplicationInfoVM appInfo)
+        internal async Task<OperationResult> Remove(ApplicationInfoVM appInfo)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -109,12 +123,13 @@ namespace SoftwareManager.Services
 
             var existing = _applications.First(a => a.Id == appInfo.Id);
             _applications.Remove(existing);
-            return true;
+            this.ApplicationDeleted?.Invoke(existing);
+            return OperationResult.Success;
         }
         #endregion
 
         #region Releases CRUD Commands
-        internal async Task<ValueResult<ApplicationReleaseVM>> Create(ApplicationReleaseVM release)
+        internal async Task<OperationResult> Create(ApplicationReleaseVM release)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -127,10 +142,11 @@ namespace SoftwareManager.Services
             var result = newRelease.ToModelView();
             var app = _applications.First(a => a.Id == result.ApplicationId);
             app.Releases.Add(result);
-            return result;
+            this.ReleaseCreated?.Invoke(result);
+            return OperationResult.Success; ;
         }
 
-        internal async Task<ValueResult<ApplicationReleaseVM>> Edit(ApplicationReleaseVM release)
+        internal async Task<OperationResult> Edit(ApplicationReleaseVM release)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -143,10 +159,10 @@ namespace SoftwareManager.Services
             var existing = _applications.First(a => a.Id == result.ApplicationId)
                     .Releases.First(a => a.Id == result.Id);
             existing.UpdatePropertiesBy(result);
-            return existing;
+            return OperationResult.Success;
         }
 
-        internal async Task<ValueResult<bool>> Remove(ApplicationReleaseVM release)
+        internal async Task<OperationResult> Remove(ApplicationReleaseVM release)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -157,12 +173,13 @@ namespace SoftwareManager.Services
             var app = _applications.First(a => a.Id == release.ApplicationId);
             var existing = app.Releases.First(a => a.Id == release.Id);
             app.Releases.Remove(existing);
-            return true;
+            this.ReleaseDeleted?.Invoke(existing);
+            return OperationResult.Success;
         }
         #endregion
 
         #region Details CRUD Commands
-        internal async Task<ValueResult<ReleaseDetailVM>> Create(ReleaseDetailVM detail)
+        internal async Task<OperationResult<ReleaseDetailVM>> Create(ReleaseDetailVM detail)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -178,7 +195,7 @@ namespace SoftwareManager.Services
             release.Details.Add(result);
             return result;
         }
-        internal async Task<ValueResult<ReleaseDetailVM>> Edit(ReleaseDetailVM detail)
+        internal async Task<OperationResult<ReleaseDetailVM>> Edit(ReleaseDetailVM detail)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -194,7 +211,7 @@ namespace SoftwareManager.Services
             existing.UpdatePropertiesBy(result);
             return existing;
         }
-        internal async Task<ValueResult<bool>> Remove(ReleaseDetailVM detail)
+        internal async Task<OperationResult<bool>> Remove(ReleaseDetailVM detail)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -213,7 +230,7 @@ namespace SoftwareManager.Services
         #endregion
 
         #region Files CRUD Commands
-        internal async Task<ValueResult<ReleaseFileVM>> Create(ReleaseFileVM releaseFile, byte[] fileBytes)
+        internal async Task<OperationResult<ReleaseFileVM>> Create(ReleaseFileVM releaseFile, byte[] fileBytes)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -229,7 +246,7 @@ namespace SoftwareManager.Services
             release.Files.Add(result);
             return result;
         }
-        internal async Task<ValueResult<bool>> Remove(ReleaseFileVM releaseFile)
+        internal async Task<OperationResult<bool>> Remove(ReleaseFileVM releaseFile)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -241,21 +258,6 @@ namespace SoftwareManager.Services
                     .First(a => a.Id == releaseFile.ReleaseId);
             release.Files.Remove(releaseFile);
             return true;
-        }
-
-        internal async Task SaveJson(string file)
-        {
-            var apps = this._applications.ToArray();
-
-            JsonSerializerOptions jOptions = new JsonSerializerOptions
-            {
-                Converters = { new JsonStringEnumConverter() },
-                WriteIndented = true,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-
-            };
-            using var stream = System.IO.File.Create(file);
-            await JsonSerializer.SerializeAsync(stream, apps, jOptions);
         }
 
         internal async Task DownloadFile(ReleaseFileVM file, string filePath)

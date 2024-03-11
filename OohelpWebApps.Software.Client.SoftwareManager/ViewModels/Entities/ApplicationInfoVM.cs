@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 
 namespace SoftwareManager.ViewModels.Entities;
 
-public class ApplicationInfoVM : Helpers.ViewModelBase
+public class ApplicationInfoVM : ViewModelBase
 {
     private string name;
     private string description;

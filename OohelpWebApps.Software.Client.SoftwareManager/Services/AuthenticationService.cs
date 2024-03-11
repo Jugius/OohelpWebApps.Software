@@ -4,12 +4,13 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
+using OohelpSoft.Helpers.Result;
 using SoftwareManager.Mapping;
 
 namespace SoftwareManager.Services;
 internal static class AuthenticationService
 {
-    public static async Task<ValueResult<string>> Login()
+    public static async Task<OperationResult<string>> Login()
     {
         if (string.IsNullOrEmpty(AppSettings.Instance.Username) ||
            string.IsNullOrEmpty(AppSettings.Instance.Password) ||

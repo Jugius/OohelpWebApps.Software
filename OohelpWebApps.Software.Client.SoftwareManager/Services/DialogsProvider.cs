@@ -44,10 +44,7 @@ public class DialogsProvider
             ? dlg.FileName
             : null;
     }
-    internal string ShowSaveAsJsonFileDialog() => ShowSaveAsFileDialog(null, "Файл JSON|*.json");
-
-
-    
+   
     public ApplicationInfoVM ShowApplicationInfoDialog() => ShowApplicationInfoDialog(new ApplicationInfoVM { Id = Guid.NewGuid() });
     public ApplicationInfoVM ShowApplicationInfoDialog(ApplicationInfoVM appInfo)
     {
@@ -182,4 +179,7 @@ public class DialogsProvider
         string argument = "/select, \"" + filePath + "\"";
         System.Diagnostics.Process.Start("explorer.exe", argument);
     }
+
+    internal void ShowInformation(string message, string caption) =>
+        MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
 }

@@ -5,7 +5,7 @@ using OohelpWebApps.Software.Domain;
 
 namespace SoftwareManager.ViewModels.Entities;
 
-public class ApplicationReleaseVM : Helpers.ViewModelBase
+public class ApplicationReleaseVM : ViewModelBase
 {
     private Version version;
     private DateOnly releaseDate;
