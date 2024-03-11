@@ -8,7 +8,7 @@
     <RootNamespace>OohelpWebApps.Software.Updater</RootNamespace>
     <AssemblyName>OohelpSoft.Software.Updater.NetCore.Wpf</AssemblyName>
 
-    <Version>1.3</Version>
+    <Version>1.4</Version>
     <Authors>OoHelp.Net</Authors>
     <Company>OoHelp.Net</Company>
     <PackageId>$(AssemblyName)</PackageId>
