@@ -28,6 +28,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Updater.NetFramework.WinFor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OohelpWebApps.Software.ZipExtractor.WinForms", "OohelpWebApps.Software.ZipExtractor.WinForms\OohelpWebApps.Software.ZipExtractor.WinForms.csproj", "{5D4A9E5D-EF60-41F0-8DC1-7D339267DC0A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OohelpWebApps.Software.Client.SoftwareManagerWeb", "OohelpWebApps.Software.Client.SoftwareManagerWeb\OohelpWebApps.Software.Client.SoftwareManagerWeb.csproj", "{A0143BC9-7EED-4BAD-8CCA-200222ECA601}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -70,6 +72,10 @@ Global
 		{5D4A9E5D-EF60-41F0-8DC1-7D339267DC0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5D4A9E5D-EF60-41F0-8DC1-7D339267DC0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D4A9E5D-EF60-41F0-8DC1-7D339267DC0A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0143BC9-7EED-4BAD-8CCA-200222ECA601}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0143BC9-7EED-4BAD-8CCA-200222ECA601}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0143BC9-7EED-4BAD-8CCA-200222ECA601}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0143BC9-7EED-4BAD-8CCA-200222ECA601}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

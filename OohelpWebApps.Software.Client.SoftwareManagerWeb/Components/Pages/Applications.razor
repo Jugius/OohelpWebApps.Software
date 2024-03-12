@@ -1,0 +1,55 @@
+﻿@page "/"
+@attribute [Authorize(Roles = "Admin")]
+@inject SoftwareApiService softwareApiService
+@inject IJSRuntime JS
+
+<PageTitle>Applications</PageTitle>
+
+<MudTable Items="@applications" Hover="true" Loading="@_loading" LoadingProgressColor="Color.Info">
+    <HeaderContent>
+        <MudTh>Название</MudTh>
+        <MudTh>Описание</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+            <MudTd DataLabel="Nr">@context.Name</MudTd>
+            <MudTd DataLabel="Sign">@context.Description</MudTd>
+            <MudTd DataLabel="Name">
+                <MudButton Variant="Variant.Filled"
+                           StartIcon="@Icons.Material.Filled.Edit"
+                           Color="Color.Error" OnClick="@(()=>GoToEditPage(context))" />
+            </MudTd>
+        </RowTemplate>
+</MudTable>
+
+<MudButton Variant="Variant.Filled">+</MudButton>
+
+    @code {
+    private List<ApplicationInfo> applications = new List<ApplicationInfo>();
+    private bool _loading;
+    protected override async Task OnInitializedAsync() 
+    {
+        this._loading = true;
+        await LoadApplications();
+        this._loading = false;
+    }
+
+    private async Task LoadApplications()
+    {
+        var result = await softwareApiService.GetAllApplications();
+        if (result.IsSuccess)
+        {
+            applications = result.Value;
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", result.Error.Message);
+        }
+        
+    }
+
+    private async Task GoToEditPage(ApplicationInfo info)
+    {
+        await JS.InvokeVoidAsync("alert", $"Now we giong to edit {info.Name} with ID {info.Id}");
+    }
+}

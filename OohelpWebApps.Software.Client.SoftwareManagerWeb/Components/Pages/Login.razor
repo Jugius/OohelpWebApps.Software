@@ -1,0 +1,43 @@
+﻿@page "/login"
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navigationManager
+@inject IJSRuntime JS
+
+<h3>Login</h3>
+<EditForm class="login-form" Model="@authRequest" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator/>
+
+    <MudGrid>
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Email" Class="mt-3"
+                                  @bind-Value="authRequest.Email" For="@(() => authRequest.Email)" />
+                    <MudTextField Label="Password" HelperText="Choose a strong password" Class="mt-3"
+                                  @bind-Value="authRequest.Password" For="@(() => authRequest.Password)" InputType="InputType.Password" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Login</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+@code {
+    private LoginViewModel authRequest = new LoginViewModel();
+    private string errorMessage = string.Empty;
+    private async Task HandleValidSubmit()
+    {
+        var authResponse = await (authStateProvider as AuthenticationProvider).Login(authRequest!);
+        if (authResponse.IsSuccess)
+        {   
+            navigationManager.NavigateTo("/");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", authResponse.Error.Message);
+        }
+    }
+
+}
