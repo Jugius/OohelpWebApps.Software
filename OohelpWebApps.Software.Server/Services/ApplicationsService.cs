@@ -18,7 +18,7 @@ public class ApplicationsService
         _dbContext = context;
         _fileSystemService = fileSystemService;
     }
-    public async Task<OperationResult<List<ApplicationInfo>>> GetAllApplications()
+    public async Task<Result<List<ApplicationInfo>>> GetAllApplications()
     {
         try
         {
@@ -36,7 +36,7 @@ public class ApplicationsService
         }
     }
 
-    public async Task<OperationResult<ApplicationInfo>> GetApplicationByName(string name)
+    public async Task<Result<ApplicationInfo>> GetApplicationByName(string name)
     {
         if (string.IsNullOrEmpty(name)) return ApiException.InvalidRequest("Name required");
         try
@@ -57,7 +57,7 @@ public class ApplicationsService
         }
     }
 
-    public async Task<OperationResult<ApplicationInfo>> GetApplicationByName(string name, Version version)
+    public async Task<Result<ApplicationInfo>> GetApplicationByName(string name, Version version)
     {
         if (string.IsNullOrEmpty(name)) return ApiException.InvalidRequest("Name required");
 
@@ -70,7 +70,7 @@ public class ApplicationsService
         application.Releases = releases;
         return application;
     }
-    public async Task<OperationResult<ApplicationInfo>> CreateApplication(ApplicationRequest request)
+    public async Task<Result<ApplicationInfo>> CreateApplication(ApplicationRequest request)
     {
         var dto = request.ToDto();
         try
@@ -85,7 +85,7 @@ public class ApplicationsService
         }
     }
 
-    public async Task<OperationResult<ApplicationInfo>> UpdateApplication(Guid applicationId, ApplicationRequest request)
+    public async Task<Result<ApplicationInfo>> UpdateApplication(Guid applicationId, ApplicationRequest request)
     {
         try
         {
@@ -103,7 +103,7 @@ public class ApplicationsService
             return ApiException.DatabaseError(ex.GetBaseException().Message);
         }
     }
-    public async Task<OperationResult<bool>> DeleteApplication(Guid applicationId)
+    public async Task<Result<bool>> DeleteApplication(Guid applicationId)
     {
         try
         {
@@ -133,7 +133,7 @@ public class ApplicationsService
         }
     }
 
-    public async Task<OperationResult<ApplicationRelease>> CreateRelease(Guid applicationId, ReleaseRequest request)
+    public async Task<Result<ApplicationRelease>> CreateRelease(Guid applicationId, ReleaseRequest request)
     {
         var release = request.ToDto();
         release.ApplicationId = applicationId;
@@ -149,7 +149,7 @@ public class ApplicationsService
         }
     }
 
-    public async Task<OperationResult<ApplicationRelease>> UpdateRelease(Guid releaseId, ReleaseRequest request)
+    public async Task<Result<ApplicationRelease>> UpdateRelease(Guid releaseId, ReleaseRequest request)
     {
         try
         {
@@ -168,7 +168,7 @@ public class ApplicationsService
         }
     }
 
-    public async Task<OperationResult<bool>> DeleteRelease(Guid releaseId)
+    public async Task<Result<bool>> DeleteRelease(Guid releaseId)
     {
         try
         {
@@ -197,7 +197,7 @@ public class ApplicationsService
         }
     }
 
-    public async Task<OperationResult<ReleaseDetail>> CreateDetail(Guid releaseId, ReleaseDetailRequest request)
+    public async Task<Result<ReleaseDetail>> CreateDetail(Guid releaseId, ReleaseDetailRequest request)
     {
         var detail = request.ToDto();
         detail.ReleaseId = releaseId;
@@ -213,7 +213,7 @@ public class ApplicationsService
         }
     }
 
-    public async Task<OperationResult<ReleaseDetail>> UpdateDetail(Guid detailId, ReleaseDetailRequest request)
+    public async Task<Result<ReleaseDetail>> UpdateDetail(Guid detailId, ReleaseDetailRequest request)
     {
         try
         {
@@ -231,7 +231,7 @@ public class ApplicationsService
         }
     }
 
-    public async Task<OperationResult<bool>> DeleteDetail(Guid detailId)
+    public async Task<Result<bool>> DeleteDetail(Guid detailId)
     {
         try
         {
@@ -249,7 +249,7 @@ public class ApplicationsService
         }
     }
 
-    public async Task<OperationResult<ReleaseFile>> CreateFile(Guid releaseId, ReleaseFileRequest request)
+    public async Task<Result<ReleaseFile>> CreateFile(Guid releaseId, ReleaseFileRequest request)
     {
         var file = request.ToDto();
 
@@ -280,7 +280,7 @@ public class ApplicationsService
         }
     }
 
-    public async Task<OperationResult<bool>> DeleteFile(Guid fileId)
+    public async Task<Result<bool>> DeleteFile(Guid fileId)
     {
         try
         {
@@ -305,7 +305,7 @@ public class ApplicationsService
             return ApiException.DatabaseError(ex.GetBaseException().Message);
         }
     }
-    public async Task<OperationResult<FileBytes>> GetFileById(Guid fileId)
+    public async Task<Result<FileBytes>> GetFileById(Guid fileId)
     {
         try
         {
@@ -322,7 +322,7 @@ public class ApplicationsService
             return ApiException.DatabaseError(ex.GetBaseException().Message);
         }
     }
-    internal async Task<OperationResult<ApplicationRelease>> FindLatestAppRelease(string name, FileRuntimeVersion? runtimeVersion)
+    internal async Task<Result<ApplicationRelease>> FindLatestAppRelease(string name, FileRuntimeVersion? runtimeVersion)
     {
         var app = await GetApplicationByName(name);
         if (!app.IsSuccess) return app.Error;

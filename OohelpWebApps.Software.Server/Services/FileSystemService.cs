@@ -13,12 +13,12 @@ public class FileSystemService
         this._uploadDirectory = Path.Combine(env.ContentRootPath, FilesFolder);
     }
 
-    public Task<OperationResult<bool>> SaveFile(byte[] fileBytes, Guid fileId)
+    public Task<Result<bool>> SaveFile(byte[] fileBytes, Guid fileId)
     {
         string fileName = Guider.ToStringFromGuid(fileId);
         return SaveFile(fileBytes, fileName);
     }
-    public async Task<OperationResult<byte[]>> GetFileBytes(Guid fileId)
+    public async Task<Result<byte[]>> GetFileBytes(Guid fileId)
     {
         string fileName = Guider.ToStringFromGuid(fileId);
         string filePath = Path.Combine(_uploadDirectory, fileName);
@@ -35,7 +35,7 @@ public class FileSystemService
             return ms.ToArray();
         }
     }
-    public async Task<OperationResult<bool>> SaveFile(byte[] fileBytes, string fileName)
+    public async Task<Result<bool>> SaveFile(byte[] fileBytes, string fileName)
     {
         string filePath = Path.Combine(_uploadDirectory, fileName);
         try
@@ -52,12 +52,12 @@ public class FileSystemService
         }
     }
 
-    public OperationResult<bool> DeleteFile(Guid fileId)
+    public Result<bool> DeleteFile(Guid fileId)
     {
         string fileName = Guider.ToStringFromGuid(fileId);
         return DeleteFile(fileName);
     }
-    public OperationResult<bool> DeleteFile(string fileName)
+    public Result<bool> DeleteFile(string fileName)
     {
         string filePath = Path.Combine(_uploadDirectory, fileName);
 
