@@ -10,7 +10,7 @@ using SoftwareManager.Mapping;
 namespace SoftwareManager.Services;
 internal static class AuthenticationService
 {
-    public static async Task<OperationResult<string>> Login()
+    public static async Task<Result<string>> Login()
     {
         if (string.IsNullOrEmpty(AppSettings.Instance.Username) ||
            string.IsNullOrEmpty(AppSettings.Instance.Password) ||

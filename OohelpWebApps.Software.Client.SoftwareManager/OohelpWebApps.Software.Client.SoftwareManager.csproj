@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="OohelpSoft.Helpers.Result" Version="1.0.2" />
+    <PackageReference Include="OohelpSoft.Helpers.Result" Version="1.0.5" />
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
     <PackageReference Include="Telerik.Windows.Controls.for.Wpf.Xaml" Version="2023.2.718" />
     <PackageReference Include="Telerik.Windows.Controls.GridView.for.Wpf.Xaml" Version="2023.2.718" />

@@ -61,7 +61,7 @@ namespace SoftwareManager.Services
             }            
         }
 
-        private async Task<OperationResult<bool>> Login()
+        private async Task<Result<bool>> Login()
         {
             if (_logined) return true;
 
@@ -79,7 +79,7 @@ namespace SoftwareManager.Services
         }
 
         #region Applications CRUD Commands
-        internal async Task<OperationResult> Create(ApplicationInfoVM appInfo)
+        internal async Task<Result> Create(ApplicationInfoVM appInfo)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -95,10 +95,10 @@ namespace SoftwareManager.Services
             var result = app.ToModelView();
             _applications.Add(result);
             this.ApplicationCreated?.Invoke(result);
-            return OperationResult.Success;
+            return Result.Success();
         }
 
-        internal async Task<OperationResult<ApplicationInfoVM>> Edit(ApplicationInfoVM appInfo)
+        internal async Task<Result<ApplicationInfoVM>> Edit(ApplicationInfoVM appInfo)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -113,7 +113,7 @@ namespace SoftwareManager.Services
             return existing;
         }
 
-        internal async Task<OperationResult> Remove(ApplicationInfoVM appInfo)
+        internal async Task<Result> Remove(ApplicationInfoVM appInfo)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -124,12 +124,12 @@ namespace SoftwareManager.Services
             var existing = _applications.First(a => a.Id == appInfo.Id);
             _applications.Remove(existing);
             this.ApplicationDeleted?.Invoke(existing);
-            return OperationResult.Success;
+            return Result.Success();
         }
         #endregion
 
         #region Releases CRUD Commands
-        internal async Task<OperationResult> Create(ApplicationReleaseVM release)
+        internal async Task<Result> Create(ApplicationReleaseVM release)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -143,10 +143,10 @@ namespace SoftwareManager.Services
             var app = _applications.First(a => a.Id == result.ApplicationId);
             app.Releases.Add(result);
             this.ReleaseCreated?.Invoke(result);
-            return OperationResult.Success; ;
+            return Result.Success(); ;
         }
 
-        internal async Task<OperationResult> Edit(ApplicationReleaseVM release)
+        internal async Task<Result> Edit(ApplicationReleaseVM release)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -159,10 +159,10 @@ namespace SoftwareManager.Services
             var existing = _applications.First(a => a.Id == result.ApplicationId)
                     .Releases.First(a => a.Id == result.Id);
             existing.UpdatePropertiesBy(result);
-            return OperationResult.Success;
+            return Result.Success();
         }
 
-        internal async Task<OperationResult> Remove(ApplicationReleaseVM release)
+        internal async Task<Result> Remove(ApplicationReleaseVM release)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -174,12 +174,12 @@ namespace SoftwareManager.Services
             var existing = app.Releases.First(a => a.Id == release.Id);
             app.Releases.Remove(existing);
             this.ReleaseDeleted?.Invoke(existing);
-            return OperationResult.Success;
+            return Result.Success();
         }
         #endregion
 
         #region Details CRUD Commands
-        internal async Task<OperationResult<ReleaseDetailVM>> Create(ReleaseDetailVM detail)
+        internal async Task<Result<ReleaseDetailVM>> Create(ReleaseDetailVM detail)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -195,7 +195,7 @@ namespace SoftwareManager.Services
             release.Details.Add(result);
             return result;
         }
-        internal async Task<OperationResult<ReleaseDetailVM>> Edit(ReleaseDetailVM detail)
+        internal async Task<Result<ReleaseDetailVM>> Edit(ReleaseDetailVM detail)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -211,7 +211,7 @@ namespace SoftwareManager.Services
             existing.UpdatePropertiesBy(result);
             return existing;
         }
-        internal async Task<OperationResult<bool>> Remove(ReleaseDetailVM detail)
+        internal async Task<Result<bool>> Remove(ReleaseDetailVM detail)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -230,7 +230,7 @@ namespace SoftwareManager.Services
         #endregion
 
         #region Files CRUD Commands
-        internal async Task<OperationResult<ReleaseFileVM>> Create(ReleaseFileVM releaseFile, byte[] fileBytes)
+        internal async Task<Result<ReleaseFileVM>> Create(ReleaseFileVM releaseFile, byte[] fileBytes)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
@@ -246,7 +246,7 @@ namespace SoftwareManager.Services
             release.Files.Add(result);
             return result;
         }
-        internal async Task<OperationResult<bool>> Remove(ReleaseFileVM releaseFile)
+        internal async Task<Result<bool>> Remove(ReleaseFileVM releaseFile)
         {
             var login = await Login();
             if (!login.IsSuccess) return login.Error;
