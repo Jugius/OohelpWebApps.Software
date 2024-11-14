@@ -43,8 +43,8 @@ public class ApplicationsService
         {
             var app = await _dbContext.Applications
              .AsNoTracking()
-             .Include(a => a.Releases).ThenInclude(a => a.Details).AsSplitQuery()
-             .Include(a => a.Releases).ThenInclude(a => a.Files).AsSplitQuery()
+             .Include(a => a.Releases).ThenInclude(a => a.Details)
+             .Include(a => a.Releases).ThenInclude(a => a.Files)
              .FirstOrDefaultAsync(a => a.Name == name);
 
             if (app == null) return ApiException.NotFound();
