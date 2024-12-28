@@ -5,13 +5,13 @@ using OohelpWebApps.Software.Updater;
 
 namespace Updater.NetFramework.WinForms.UITests
 {
-    public partial class Form1 : Form, IUpdatableApplication
+    public partial class Form1 : Form, IWinFormsUpdatableApplication
     {
         private readonly ApplicationDeployment deployment;
         public Form1()
         {
             InitializeComponent();
-            this.deployment = new ApplicationDeployment(this);
+            this.deployment = ApplicationDeployment.Create(this);
         }
 
         public string ApplicationName => "AdvisorDB";

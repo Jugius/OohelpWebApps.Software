@@ -13,6 +13,19 @@ public abstract class ApplicationDeployment
 
     private DownloadedUpdate _downloadedUpdate;
 
+    internal ApplicationDeployment(IUpdatableApplication application, DialogProvider dialogProvider)
+    {
+        this._apiSoftwareService = new ApiSoftwareService(application.UpdatesServer);
+        this._application = application;
+        this._runtimeVersion = GetApplicationRuntimeVersion();
+        this._dialogProvider = dialogProvider;
+    }
+
+    public static ApplicationDeployment Create(IWinFormsUpdatableApplication application)
+    {         
+        return new WinForms.ApplicationDeployment(application, new WinForms.Dialogs.DialogProvider(application));
+    }
+
     protected abstract void ShutdownApplication();
     public async Task UpdateApplication(UpdateMethod method)
     {
@@ -30,12 +43,13 @@ public abstract class ApplicationDeployment
 
         if (!app.HasNewerVersion(this._application.Version))
         {
-            this._dialogProvider.ShowMessage_YouUseLastVersion(method);
+            ReportYouUseNewestVersion(method);
             return;
         }
 
         await OnNewApplicationVersionFound(result.Value, method);
     }
+    
     private async Task OnNewApplicationVersionFound(ApplicationInfo appInfo, UpdateMethod method)
     {
         if (appInfo.TryGetSuitableReleaseToUpdate(_application.Version, _runtimeVersion, out ApplicationRelease release))
@@ -63,6 +77,7 @@ public abstract class ApplicationDeployment
                 });
         }
     }
+    
     private async Task ProcessNewApplicationRelease(ApplicationInfo appInfo, ApplicationRelease release, UpdateMethod method)
     {
         if (IsUpdatePreparedToDeploy(release.Version))
@@ -91,7 +106,7 @@ public abstract class ApplicationDeployment
 
         await ProcessDownloadUpdateRequest(request, method);
     }
-
+    
     private async Task ProcessDownloadUpdateRequest(DownloadUpdateRequest request, UpdateMethod method)
     {
         var order = GetDeploymentOrder(request, method);
@@ -123,7 +138,6 @@ public abstract class ApplicationDeployment
         if (showDialogs)
         {
             return this._dialogProvider.ShowUpdateDownloadDialog(updateRequest, this._apiSoftwareService);
-            //throw new NotImplementedException();
         }
 
         var downloadAppTask = SaveFileToUpdateFolder(updateRequest.ApplicationReleaseFile);
@@ -145,6 +159,7 @@ public abstract class ApplicationDeployment
         }
         return null;
     }
+    
     private async Task<OperationResult<string>> SaveFileToUpdateFolder(ReleaseFile releaseFile)
     {
         var downloadresult = await _apiSoftwareService.DownloadToTempFile(releaseFile);
@@ -164,6 +179,7 @@ public abstract class ApplicationDeployment
             return ex;
         }
     }
+    
     private bool IsUpdatePreparedToDeploy(Version version)
     {
         if (this._downloadedUpdate == null) return false;
@@ -177,11 +193,11 @@ public abstract class ApplicationDeployment
         }
         return true;
     }
+    
     private DeploymentOrder GetDeploymentOrder(DownloadUpdateRequest request, UpdateMethod method) =>
        method == UpdateMethod.Manual || method == UpdateMethod.DownloadAndUpdateOnRequest
        ? this._dialogProvider.ShowUpdateInfoDialog(request)
        : DeploymentOrder.Quietly;
-
 
     private DeploymentOrder GetDeploymentOrder(DownloadedUpdate update, UpdateMethod method, DeploymentOrder order = null) => method switch
     {
@@ -198,12 +214,25 @@ public abstract class ApplicationDeployment
         _ => DeploymentOrder.Quietly
     };
 
+    private void ReportYouUseNewestVersion(UpdateMethod method)
+    {
+        if (method == UpdateMethod.Manual)
+        {
+            string message = $"Вы используете последнюю версию {_application.ApplicationName}.\nТекущая версия: {_application.Version.ToFormattedString()}";
+
+            this._dialogProvider.ShowMessage(message, "Обновление");
+        }
+    }
+
+
     internal static RuntimeVersion GetApplicationRuntimeVersion()
     {
         var netVer = Environment.Version;
 
         int ver = netVer.Major * 10 + netVer.Minor;
-
+        
+        if (ver >= 100) return RuntimeVersion.Net10;
+        if (ver >= 90) return RuntimeVersion.Net9;
         if (ver >= 80) return RuntimeVersion.Net8;
         if (ver >= 70) return RuntimeVersion.Net7;
         if (ver >= 60) return RuntimeVersion.Net6;

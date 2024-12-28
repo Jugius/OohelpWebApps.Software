@@ -1,4 +1,6 @@
-﻿using OohelpWebApps.Software.Updater.Extentions;
+﻿using System.Text;
+using OohelpWebApps.Software.Updater.Common;
+using OohelpWebApps.Software.Updater.Extentions;
 using OohelpWebApps.Software.Updater.Services;
 
 namespace OohelpWebApps.Software.Updater;
@@ -29,14 +31,26 @@ internal abstract class DialogProvider
 
         this.ShowException(message, "Ошибка загрузки обновления");
     }
-    internal void ShowMessage_YouUseLastVersion(UpdateMethod method)
+    
+    protected string GetVersionInfo(ApplicationRelease newRelease, ApplicationInfo appInfo)
     {
-        if (method == UpdateMethod.Manual)
+        var releases = appInfo.Releases.Where(a => a.Version > _application.Version && a.Version <= newRelease.Version).OrderByDescending(a => a.Version);
+
+        StringBuilder sb = new StringBuilder();
+        foreach (var release in releases)
         {
-            ShowMessage(
-                message: $"Вы используете последнюю версию {_application.ApplicationName}." +
-                $"\nТекущая версия: {_application.Version.ToFormattedString()}",
-                caption: "Обновление");
+            sb.AppendLine($"Вер.: {release.Version.ToFormattedString()}, {release.ReleaseDate:dd.MM.yyyy}");
+
+            if (release.Details == null || release.Details.Count == 0) continue;
+
+            foreach (var group in release.Details.GroupBy(a => a.Kind))
+            {
+                sb.AppendLine(group.Key.ToValueString())
+                  .Append(string.Join(Environment.NewLine, group.Select(a => $"  {a.Description}")))
+                  .AppendLine();
+            }
+            sb.AppendLine();
         }
+        return sb.ToString();
     }
 }

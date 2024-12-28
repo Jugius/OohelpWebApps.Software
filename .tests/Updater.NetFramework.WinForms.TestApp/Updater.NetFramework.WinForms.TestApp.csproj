@@ -84,9 +84,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\OohelpWebApps.Software.Updater.NetFramework.WinForms\OohelpWebApps.Software.Updater.NetFramework.WinForms.csproj">
-      <Project>{97d8b78b-e9b5-4312-b8d3-28cf2a0054bd}</Project>
-      <Name>OohelpWebApps.Software.Updater.NetFramework.WinForms</Name>
+    <ProjectReference Include="..\..\OohelpWebApps.Software.Updater\OohelpWebApps.Software.Updater.csproj">
+      <Project>{41c93be6-fc21-4349-908a-dd9ed99b522d}</Project>
+      <Name>OohelpWebApps.Software.Updater</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
