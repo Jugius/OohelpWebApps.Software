@@ -59,7 +59,11 @@ public sealed class ApplicationDeployment
 
         if (method != UpdateMethod.Manual) return;
 
-        if (!appInfo.TryGetSuitableReleaseToInstall(_application.Version, _runtimeVersion, out release)) return;
+        if (!appInfo.TryGetSuitableReleaseToInstall(_application.Version, _runtimeVersion, out release))
+        {
+            this._dialogProvider.ShowMessage_YouUseLastVersion(method);
+            return;
+        }
 
         var file = release.Files.GetSuitableFileToInstall(this._runtimeVersion);
 
@@ -216,12 +220,9 @@ public sealed class ApplicationDeployment
 
         int ver = netVer.Major * 10 + netVer.Minor;
 
-        if (ver >= 80) return RuntimeVersion.Net8;
-        if (ver >= 70) return RuntimeVersion.Net7;
-        if (ver >= 60) return RuntimeVersion.Net6;
-        if (ver >= 50) return RuntimeVersion.Net5;
-
-        return RuntimeVersion.NetFramework;
+        if (ver >= 100) return RuntimeVersion.Net10;
+        
+        return RuntimeVersion.Net9;        
     }
 
     public static Version GetApplicationVersion(Assembly assembly)
