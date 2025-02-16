@@ -10,3 +10,11 @@ public enum FileRuntimeVersion
     Net9 = 9,
     Net10 = 10,
 }
+public static class FileRuntimeVersionExtentions
+{
+    public static string ToRuntimeName(this FileRuntimeVersion version) => version switch
+    {
+        FileRuntimeVersion.NetFramework => ".NET Framework",
+        _ => $".NET {(int)version}"
+    };
+}
