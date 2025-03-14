@@ -31,14 +31,6 @@ internal static class InternalModelsExtention
 
         return release != null;
     }
-    public static string ToValueString(this DetailKind kind) => kind switch
-    {
-        DetailKind.Changed => "Изменения:",
-        DetailKind.Fixed => "Исправления:",
-        DetailKind.Updated => "Обновления:",
-        DetailKind.Implemented => "Новое:",
-        _ => kind.ToString()
-    };
     public static ReleaseFile GetSuitableFileToUpdate(this IEnumerable<ReleaseFile> files, RuntimeVersion runtimeVersion) =>
         files.First(f => f.RuntimeVersion == runtimeVersion && f.Kind == FileKind.Update);
 

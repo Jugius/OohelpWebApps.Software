@@ -1,5 +1,5 @@
 ﻿namespace OohelpWebApps.Software.Updater.Services;
-internal readonly struct OperationResult<TValue>
+internal class OperationResult<TValue>
 {
     public TValue Value { get; }
     public Exception Error { get; }
@@ -17,11 +17,6 @@ internal readonly struct OperationResult<TValue>
         IsSuccess = false;
         Value = default;
     }
-
-    public TResult Match<TResult>(
-        Func<TValue, TResult> success,
-        Func<Exception, TResult> failure) =>
-        IsSuccess ? success(Value) : failure(Error);
 
     public static implicit operator OperationResult<TValue>(TValue value) => new(value);
     public static implicit operator OperationResult<TValue>(Exception error) => new(error);

@@ -1,45 +1,43 @@
 ﻿using OohelpWebApps.Software.Updater.Common;
 using OohelpWebApps.Software.Updater.Common.Enums;
+using OohelpWebApps.Software.Updater.Services;
 
 namespace OohelpWebApps.Software.Updater.Extentions;
 internal static class InternalModelsExtention
 {
-    public static bool HasNewerVersion(this ApplicationInfo application, Version version)
+    private static readonly RuntimeVersion runtimeVersion = RuntimeService.Version;
+    public static bool HasNewerVersion(this ApplicationInfo application, Version currentAppVersion)
     {
-        return application.Releases.Any(r => r.Version > version && r.Files.Any());
+        return application.Releases.Any(r => r.Version > currentAppVersion && r.Files.Count > 0);
     }
-    public static bool TryGetSuitableReleaseToUpdate(this ApplicationInfo appInfo, Version version, RuntimeVersion runtimeVersion, out ApplicationRelease release)
+
+    public static bool HasSuitableReleaseToUpdate(this ApplicationInfo application, Version currentAppVersion)
+    { 
+        return application.Releases
+            .Any(release => release.Version > currentAppVersion && release.Files.Any(f => f.RuntimeVersion == runtimeVersion && f.Kind == FileKind.Update));
+    }
+    public static bool HasSuitableReleaseToInstall(this ApplicationInfo application, Version currentAppVersion)
     {
-        release = appInfo.Releases
-            .Where(rel => rel.Version > version &&
+        return application.Releases
+            .Any(release => release.Version > currentAppVersion &&
+                release.Files.Any(f => f.RuntimeVersion >= runtimeVersion && f.Kind == FileKind.Install));
+    }
+    public static ApplicationRelease GetSuitableReleaseToUpdate(this ApplicationInfo application, Version currentAppVersion)
+    {
+        return application.Releases
+            .Where(rel => rel.Version > currentAppVersion &&
                 rel.Files.Any(f => f.RuntimeVersion == runtimeVersion && f.Kind == FileKind.Update))
             .MaxBy(a => a.Version);
-
-        return release != null;
     }
-    public static bool TryGetSuitableReleaseToInstall(this ApplicationInfo appInfo, Version version, RuntimeVersion runtimeVersion, out ApplicationRelease release)
+    public static ApplicationRelease GetSuitableReleaseToInstall(this ApplicationInfo appInfo, Version version)
     {
-        release = appInfo.Releases
-                .Where(rel => rel.Version > version &&
-                 rel.Files.Any(f => f.RuntimeVersion > runtimeVersion && f.Kind == FileKind.Install))
-                .MaxBy(a => a.Version);
-
-        return release != null;
+        return appInfo.Releases
+            .Where(rel => rel.Version > version &&
+                rel.Files.Any(f => f.RuntimeVersion >= runtimeVersion && f.Kind == FileKind.Install))
+            .MaxBy(a => a.Version);
     }
-    public static string ToValueString(this DetailKind kind) => kind switch
-    {
-        DetailKind.Changed => "Изменения:",
-        DetailKind.Fixed => "Исправления:",
-        DetailKind.Updated => "Обновления:",
-        DetailKind.Implemented => "Новое:",
-        _ => kind.ToString()
-    };
-    public static ReleaseFile GetSuitableFileToUpdate(this IEnumerable<ReleaseFile> files, RuntimeVersion runtimeVersion) =>
-        files.First(f => f.RuntimeVersion == runtimeVersion && f.Kind == FileKind.Update);
 
-    public static ReleaseFile GetSuitableFileToInstall(this IEnumerable<ReleaseFile> files, RuntimeVersion runtimeVersion) =>
-        files.First(f => f.RuntimeVersion > runtimeVersion && f.Kind == FileKind.Install);
-
-
+    public static ReleaseFile GetSuitableFileToUpdate(this IEnumerable<ReleaseFile> files) =>
+        files.First(f => f.RuntimeVersion == runtimeVersion && f.Kind == FileKind.Update);  
 }
 

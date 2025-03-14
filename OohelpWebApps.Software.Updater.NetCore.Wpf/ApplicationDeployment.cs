@@ -10,7 +10,6 @@ public sealed class ApplicationDeployment
 {
     private readonly ApiSoftwareService _apiSoftwareService;
     private readonly IUpdatableApplication _application;
-    private readonly RuntimeVersion _runtimeVersion;
     private readonly DialogProvider _dialogProvider;
 
     private DownloadedUpdate _downloadedUpdate;
@@ -18,7 +17,6 @@ public sealed class ApplicationDeployment
     public ApplicationDeployment(IUpdatableApplication application)
     {
         this._application = application;
-        this._runtimeVersion = GetApplicationRuntimeVersion();
         this._apiSoftwareService = new ApiSoftwareService(application.UpdatesServer);
         this._dialogProvider = new DialogProvider(application);
     }
@@ -38,39 +36,50 @@ public sealed class ApplicationDeployment
             return;
         }
 
-        var app = result.Value;
+        var appInfo = result.Value;
 
-        if (!app.HasNewerVersion(this._application.Version))
+        if (appInfo.HasNewerVersion(this._application.Version))
+        {
+            await ProcessNewApplicationVersion(appInfo, method);
+        }
+        else 
         {
             this._dialogProvider.ShowMessage_YouUseLastVersion(method);
-            return;
         }
-
-        await OnNewApplicationVersionFound(result.Value, method);
     }
 
-    private async Task OnNewApplicationVersionFound(ApplicationInfo appInfo, UpdateMethod method)
+    private async Task ProcessNewApplicationVersion(ApplicationInfo appInfo, UpdateMethod method)
     {
-        if (appInfo.TryGetSuitableReleaseToUpdate(_application.Version, _runtimeVersion, out ApplicationRelease release))
+        if (appInfo.HasSuitableReleaseToUpdate(_application.Version))
         {
-            await ProcessNewApplicationRelease(appInfo, release, method);
+            await ProcessNewApplicationUpdateRelease(appInfo, method);
+            return;
+        }        
+
+        if (appInfo.HasSuitableReleaseToInstall(_application.Version))
+        {
+            ProcessNewApplicationInstallRelease(appInfo, method);
             return;
         }
 
+        this._dialogProvider.ShowMessage_YouUseLastVersion(method);        
+    }
+    private void ProcessNewApplicationInstallRelease(ApplicationInfo appInfo, UpdateMethod method)
+    {
         if (method != UpdateMethod.Manual) return;
+        if (this._application.DownloadPage == null) return;
 
-        if (!appInfo.TryGetSuitableReleaseToInstall(_application.Version, _runtimeVersion, out release))
-        {
-            this._dialogProvider.ShowMessage_YouUseLastVersion(method);
-            return;
-        }
+        ApplicationRelease release = appInfo.GetSuitableReleaseToInstall(_application.Version);
+        var files = release.Files.Where(file => file.Kind == FileKind.Install);        
 
-        var file = release.Files.GetSuitableFileToInstall(this._runtimeVersion);
+        var file = files.FirstOrDefault(f => f.RuntimeVersion > RuntimeService.Version) 
+                ?? files.FirstOrDefault(f => f.RuntimeVersion == RuntimeService.Version);
 
-        string message = $"Приложение {_application.ApplicationName} использует для работы {_runtimeVersion}.\nОбнаружена новая версия {release.Version.ToFormattedString()}, для работы которой необходим {file.RuntimeVersion}.\n\nПерейти на страницу для загрузки обновления?";
+        string message = file.RuntimeVersion > RuntimeService.Version
+            ? $"Текущая версия {_application.ApplicationName} {_application.Version.ToFormattedString()} работает на платформе {RuntimeService.Version}.\nОбнаружена новая версия {release.Version.ToFormattedString()}, для работы которой необходим {file.RuntimeVersion}.\n\nПерейти на страницу {_application.DownloadPage.Host} для загрузки?"
+            : $"Обнаружена новая версия {_application.ApplicationName} {release.Version.ToFormattedString()}.\n\nПерейти на страницу для загрузки?";
 
-        if (this._application.DownloadPage != null &&
-            _dialogProvider.ShowQuestion(message, $"Обновление {_application.ApplicationName}"))
+        if (_dialogProvider.ShowQuestion(message, $"Обновление {_application.ApplicationName}"))
         {
             System.Diagnostics.Process.Start(
                 new System.Diagnostics.ProcessStartInfo
@@ -80,16 +89,18 @@ public sealed class ApplicationDeployment
                 });
         }
     }
-    private async Task ProcessNewApplicationRelease(ApplicationInfo appInfo, ApplicationRelease release, UpdateMethod method)
+    private async Task ProcessNewApplicationUpdateRelease(ApplicationInfo appInfo, UpdateMethod method)
     {
-        if (IsUpdatePreparedToDeploy(release.Version))
+        ApplicationRelease release = appInfo.GetSuitableReleaseToUpdate(_application.Version);
+
+        if (UpdateIsInQueueToDeploy(release.Version))
         {
             var order = GetDeploymentOrder(this._downloadedUpdate, method, null);
             ProcessDownloadedUpdate(order);
             return;
         }
 
-        var appFile = release.Files.GetSuitableFileToUpdate(this._runtimeVersion);
+        var appFile = release.Files.GetSuitableFileToUpdate();
         var getExtractorFileResult = await _apiSoftwareService.GetExtractorFile(appFile.RuntimeVersion);
 
         if (!getExtractorFileResult.IsSuccess)
@@ -200,7 +211,7 @@ public sealed class ApplicationDeployment
         _ => DeploymentOrder.Quietly
     };
     
-    private bool IsUpdatePreparedToDeploy(Version version)
+    private bool UpdateIsInQueueToDeploy(Version version)
     {
         if (this._downloadedUpdate == null) return false;
 
@@ -214,16 +225,7 @@ public sealed class ApplicationDeployment
         return true;
     }  
     
-    internal static RuntimeVersion GetApplicationRuntimeVersion()
-    {
-        var netVer = Environment.Version;
 
-        int ver = netVer.Major * 10 + netVer.Minor;
-
-        if (ver >= 100) return RuntimeVersion.Net10;
-        
-        return RuntimeVersion.Net9;        
-    }
 
     public static Version GetApplicationVersion(Assembly assembly)
     {
@@ -246,20 +248,13 @@ public sealed class ApplicationDeployment
     }
     public override string ToString()
     {
-        string status = $"Application: {this._application.ApplicationName}" +
+        var downloadedInfo = this._downloadedUpdate == null
+            ? "No updates downloaded."
+            : $"Downloaded update version: {this._downloadedUpdate.Release.Version.ToFormattedString()}\n{this._downloadedUpdate}";
+
+        return $"Application: {this._application.ApplicationName}" +
             $"\nVersion: {this._application.Version.ToFormattedString()}" +
-            $"\nRuntime: {this._runtimeVersion}";
-
-        if (this._downloadedUpdate == null)
-        {
-            status += "\n\nNo updates downloaded.";
-        }
-        else
-        { 
-            status += $"\n\nDownloaded update version: {this._downloadedUpdate.Release.Version.ToFormattedString()}\n" +
-            $"{this._downloadedUpdate}";
-        }
-
-        return status ;
+            $"\nRuntime: {RuntimeService.Version}" + 
+            $"\n\nUpdate In Queue To Deploy:\n{downloadedInfo}";
     }
 }

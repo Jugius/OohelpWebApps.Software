@@ -12,10 +12,7 @@ internal class DialogProvider
     private Window DialogsOwner => _application.MainWindow;
 
 
-    public DialogProvider(IUpdatableApplication application)
-    {
-        _application = application;        
-    }
+    public DialogProvider(IUpdatableApplication application) => _application = application;
 
     public void ShowException(string message, string caption) => DialogsOwner.Dispatcher.Invoke(() =>
     {
