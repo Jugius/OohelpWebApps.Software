@@ -262,15 +262,11 @@ namespace SoftwareManager.Services
 
         internal async Task DownloadFile(ReleaseFileVM file, string filePath)
         {
-            string path = GetDownloadRequestString(file);
-            using (HttpClient client = new HttpClient())
+            using var response = await _httpClient.GetAsync($"/api/file/{file.Id}");
+            using (var fs = new FileStream(filePath, FileMode.CreateNew))
             {
-                using (HttpResponseMessage response = await client.GetAsync(path))
-                using (var fs = new FileStream(filePath, FileMode.CreateNew))
-                {
-                    await response.Content.CopyToAsync(fs);
-                }
-            }
+                await response.Content.CopyToAsync(fs);
+            }            
         }
         #endregion
 
@@ -280,10 +276,9 @@ namespace SoftwareManager.Services
             return string.IsNullOrEmpty(server) ? null : new Uri($"https://{server}");
         }
 
-        public string GetDownloadRequestString(ReleaseFileVM file)
+        public Uri GetDownloadRequestUri(ReleaseFileVM file)
         {
-            string server = AppSettings.Instance.SoftwareApiServer;
-            return string.IsNullOrEmpty(server) ? null : $"https://{server}/api/file/{file.Id}";
+            return new Uri(this._httpClient.BaseAddress, $"/api/file/{file.Id}");
         }
     }
 }

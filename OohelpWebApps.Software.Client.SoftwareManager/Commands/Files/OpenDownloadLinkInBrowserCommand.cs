@@ -12,7 +12,7 @@ public class OpenDownloadLinkInBrowserCommand : CommandBase
     {
         if (parameter is not ReleaseFileVM file) return;
 
-        string filePath = ApplicationsService.GetDownloadRequestString(file);
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filePath) { UseShellExecute = true });
+        var uri = ApplicationsService.GetDownloadRequestUri(file);
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
     }
 }

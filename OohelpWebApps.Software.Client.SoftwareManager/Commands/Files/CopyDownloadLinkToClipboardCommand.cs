@@ -13,9 +13,9 @@ public class CopyDownloadLinkToClipboardCommand : CommandBase
         if (parameter is not Telerik.Windows.Controls.RadGridView radGrid ||
             radGrid.SelectedItem is not ReleaseFileVM file) return;
 
-        string link = ApplicationsService.GetDownloadRequestString(file);
+        var link = ApplicationsService.GetDownloadRequestUri(file);
 
-        System.Windows.Clipboard.SetText(link);
+        System.Windows.Clipboard.SetText(link.AbsoluteUri);
         DialogProvider.ShowInformation($"Ссылка скопирована в буфер:\n{link}", file.Name);        
     }
 }
