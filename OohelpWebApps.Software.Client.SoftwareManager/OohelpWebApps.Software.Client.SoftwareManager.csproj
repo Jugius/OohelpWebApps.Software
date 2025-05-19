@@ -27,15 +27,29 @@
   <ItemGroup>
     <PackageReference Include="OohelpSoft.Helpers.Result" Version="1.0.6" />
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
-    <PackageReference Include="Telerik.Windows.Controls.for.Wpf.Xaml" Version="2023.2.718" />
-    <PackageReference Include="Telerik.Windows.Controls.GridView.for.Wpf.Xaml" Version="2023.2.718" />
-    <PackageReference Include="Telerik.Windows.Controls.Input.for.Wpf.Xaml" Version="2023.2.718" />
-    <PackageReference Include="Telerik.Windows.Data.for.Wpf.Xaml" Version="2023.2.718" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OohelpWebApps.Software.Contracts\OohelpWebApps.Software.Contracts.csproj" />
     <ProjectReference Include="..\OohelpWebApps.Software.Domain\OohelpWebApps.Software.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Telerik.Licensing.Runtime">
+      <HintPath>D:\MyFiles\GDrive\Programming\ProjectsResources\DLL\Telerik UI for WPF\Telerik.Licensing.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Telerik.Windows.Controls">
+      <HintPath>D:\MyFiles\GDrive\Programming\ProjectsResources\DLL\Telerik UI for WPF\Telerik.Windows.Controls.dll</HintPath>
+    </Reference>
+    <Reference Include="Telerik.Windows.Controls.GridView">
+      <HintPath>D:\MyFiles\GDrive\Programming\ProjectsResources\DLL\Telerik UI for WPF\Telerik.Windows.Controls.GridView.dll</HintPath>
+    </Reference>
+    <Reference Include="Telerik.Windows.Controls.Input">
+      <HintPath>D:\MyFiles\GDrive\Programming\ProjectsResources\DLL\Telerik UI for WPF\Telerik.Windows.Controls.Input.dll</HintPath>
+    </Reference>
+    <Reference Include="Telerik.Windows.Data">
+      <HintPath>D:\MyFiles\GDrive\Programming\ProjectsResources\DLL\Telerik UI for WPF\Telerik.Windows.Data.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
