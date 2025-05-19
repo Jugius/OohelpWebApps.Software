@@ -1,13 +1,18 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OohelpWebApps.Software.Server;
 using OohelpWebApps.Software.Server.Database;
 using OohelpWebApps.Software.Server.Endpoints;
 using OohelpWebApps.Software.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<AppDbContext>(x => x.UseSqlServer(builder.Configuration.GetValue<string>("ConnectionString")));
 
+builder.RegisterSerilog();
+
+builder.Services.AddDbContext<AppDbContext>(x => x.UseSqlServer(builder.Configuration.GetConnectionString(nameof(AppDbContext))));
+
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ApplicationsService>();
 builder.Services.AddSingleton<FileSystemService>();
 
@@ -45,7 +50,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-//app.MapControllers();
+app.MapGet("/", () => Results.Redirect("https://oohelp.net", permanent:true));
 app.MapApplicationEndpoints();
 app.MapReleaseEndpoints();
 app.MapDetailEndpoints();

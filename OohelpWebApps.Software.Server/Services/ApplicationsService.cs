@@ -43,6 +43,7 @@ public class ApplicationsService
         {
             var app = await _dbContext.Applications
              .AsNoTracking()
+             .AsSplitQuery()
              .Include(a => a.Releases).ThenInclude(a => a.Details)
              .Include(a => a.Releases).ThenInclude(a => a.Files)
              .FirstOrDefaultAsync(a => a.Name == name);
@@ -309,13 +310,25 @@ public class ApplicationsService
     {
         try
         {
-            var file = await _dbContext.Files.FirstOrDefaultAsync(a => a.Id == fileId);
+            var file = await _dbContext.Files
+                .AsNoTracking()
+                .Include(a => a.Release)
+                .ThenInclude(a => a.Application)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(a => a.Id == fileId);
+
             if (file == null) return ApiException.NotFound();
 
             var bytesResult = await _fileSystemService.GetFileBytes(fileId);
             if (!bytesResult.IsSuccess) return bytesResult.Error;
 
-            return new FileBytes(bytesResult.Value, file.Name);
+            return new FileBytes
+            {
+                ApplicationName = file.Release.Application.Name,
+                ReleaseVersion = file.Release.Version,
+                FileName = file.Name,
+                Bytes = bytesResult.Value
+            };
         }
         catch (Exception ex)
         {

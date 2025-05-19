@@ -1,6 +1,7 @@
 ﻿using OohelpWebApps.Software.Contracts.Requests;
 using OohelpWebApps.Software.Server.Mapping;
 using OohelpWebApps.Software.Server.Services;
+using Serilog;
 
 namespace OohelpWebApps.Software.Server.Endpoints;
 
@@ -32,8 +33,11 @@ public static class FileEndpoints
     {
         var result = await appService.GetFileById(id);
 
-        return result.Match(
-            s => Results.File(result.Value.Bytes, "application/octet-stream", result.Value.FileName),
-            f => result.Error.ToApiErrorResult());
+        if (result.IsFailure) return result.Error.ToApiErrorResult();
+
+        var file = result.Value;
+
+        Log.Information("Downloaded application {AppName}, release {Version} file {FileName}", file.ApplicationName, file.ReleaseVersion, file.FileName);
+        return Results.File(file.Bytes, "application/octet-stream", file.FileName);
     }
 }
