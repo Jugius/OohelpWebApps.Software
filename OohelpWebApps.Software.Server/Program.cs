@@ -55,5 +55,6 @@ app.MapApplicationEndpoints();
 app.MapReleaseEndpoints();
 app.MapDetailEndpoints();
 app.MapFileEndpoints();
+app.MapUpdateEndpoints();
 
 app.Run();

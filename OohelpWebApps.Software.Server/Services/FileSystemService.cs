@@ -26,13 +26,14 @@ public class FileSystemService
         if (!System.IO.File.Exists(filePath))
             return ApiException.FileSystemError("File not exist");
 
-        using (MemoryStream ms = new MemoryStream())
+        try
         {
-            using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-            {
-                await fs.CopyToAsync(ms);
-            }
-            return ms.ToArray();
+            var bytes = await File.ReadAllBytesAsync(filePath);
+            return bytes;
+        }
+        catch (Exception ex)
+        {
+            return ApiException.FileSystemError("File read error: " + ex.Message);
         }
     }
     public async Task<Result<bool>> SaveFile(byte[] fileBytes, string fileName)

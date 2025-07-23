@@ -5,6 +5,7 @@ using OohelpWebApps.Software.Domain;
 using OohelpWebApps.Software.Server.Database;
 using OohelpWebApps.Software.Server.Exceptions;
 using OohelpWebApps.Software.Server.Mapping;
+using OohelpWebApps.Software.Server.Models;
 
 namespace OohelpWebApps.Software.Server.Services;
 
@@ -306,6 +307,28 @@ public class ApplicationsService
             return ApiException.DatabaseError(ex.GetBaseException().Message);
         }
     }
+    public async Task<Result<UpdatePackage>> BuildUpdatePackage(Guid fileId)
+    {
+        var appFileResult = await GetFileById(fileId);
+        if (appFileResult.IsFailure) return appFileResult.Error;
+
+        var extractorReleaseResult = await FindLatestAppRelease("ZipExtractor", appFileResult.Value.RuntimeVersion);
+        if (extractorReleaseResult.IsFailure) return ApiException.DatabaseError($"Не найден распаковщик для платформы {appFileResult.Value.RuntimeVersion.ToRuntimeName()}");
+
+        var extractorFile = extractorReleaseResult.Value.Files
+            .FirstOrDefault(a => a.Kind == FileKind.Install && a.RuntimeVersion == appFileResult.Value.RuntimeVersion);
+        if(extractorFile == null) return ApiException.DatabaseError($"Не найден распаковщик для платформы {appFileResult.Value.RuntimeVersion.ToRuntimeName()}");
+
+        var extractorFileResult = await GetFileById(extractorFile.Id);
+        if (extractorFileResult.IsFailure) return ApiException.FileSystemError("Ошибка загрузки распаковщика.");
+
+        return new UpdatePackage
+        {
+            Application = appFileResult.Value,
+            Extractor = extractorFileResult.Value,
+        };
+
+    }
     public async Task<Result<FileBytes>> GetFileById(Guid fileId)
     {
         try
@@ -327,6 +350,9 @@ public class ApplicationsService
                 ApplicationName = file.Release.Application.Name,
                 ReleaseVersion = file.Release.Version,
                 FileName = file.Name,
+                Checksum = file.CheckSum,
+                Kind = (FileKind)file.Kind,
+                RuntimeVersion = (FileRuntimeVersion)file.RuntimeVersion,
                 Bytes = bytesResult.Value
             };
         }
