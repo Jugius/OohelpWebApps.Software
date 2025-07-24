@@ -62,8 +62,7 @@ public class FileSystemService
     {
         string filePath = Path.Combine(_uploadDirectory, fileName);
 
-        if (!System.IO.File.Exists(filePath))
-            return ApiException.FileSystemError("File not exist");
+        if (!System.IO.File.Exists(filePath)) return true;
 
         try
         {
