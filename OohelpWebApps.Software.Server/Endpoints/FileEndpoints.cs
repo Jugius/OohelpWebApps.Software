@@ -37,7 +37,6 @@ public static class FileEndpoints
 
         var file = result.Value;
 
-        Log.Information("Downloaded application {AppName}, release {Version} file {FileName}", file.ApplicationName, file.ReleaseVersion, file.FileName);
         return Results.File(file.Bytes, "application/octet-stream", file.FileName);
     }
 }
