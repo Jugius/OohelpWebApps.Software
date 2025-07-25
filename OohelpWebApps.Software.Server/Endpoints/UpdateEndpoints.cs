@@ -1,4 +1,6 @@
-﻿using OohelpWebApps.Software.Server.Mapping;
+﻿using System.Text;
+using System.Text.Json;
+using OohelpWebApps.Software.Server.Mapping;
 using OohelpWebApps.Software.Server.Services;
 using Serilog;
 
@@ -10,7 +12,8 @@ public static class UpdateEndpoints
     {
         app.MapGet("/api/update/{id:guid}", DownloadUpdate);
     }
-    private static async Task<IResult> DownloadUpdate(Guid id, ApplicationsService appService)
+
+    private static async Task<IResult> DownloadUpdate(Guid id, ApplicationsService appService, HttpContext context)
     {
         var result = await appService.BuildUpdatePackage(id);
 
@@ -20,6 +23,6 @@ public static class UpdateEndpoints
 
         Log.Information("Updated application {AppName}, release {Version} file {FileName}", package.Application.ApplicationName, package.Application.ReleaseVersion, package.Application.FileName);
 
-        return Results.Json(package);
+        return ResultsExtension.JsonWithLength(package);
     }
 }
