@@ -100,21 +100,13 @@ public sealed class ApplicationDeployment
             return;
         }
 
-        var appFile = release.Files.GetSuitableFileToUpdate();
-        var getExtractorFileResult = await _apiSoftwareService.GetExtractorFile(appFile.RuntimeVersion);
-
-        if (!getExtractorFileResult.IsSuccess)
-        {
-            this._dialogProvider.ShowException_GetExtractorError(getExtractorFileResult.Error, release.Version, method);
-            return;
-        }
+        var appFile = release.Files.GetSuitableFileToUpdate();        
 
         DownloadUpdateRequest request = new DownloadUpdateRequest
         {
             AppInfo = appInfo,
             Release = release,
             ApplicationReleaseFile = appFile,
-            ExtractorReleaseFile = getExtractorFileResult.Value
         };
 
         await ProcessDownloadUpdateRequest(request, method);
@@ -148,68 +140,46 @@ public sealed class ApplicationDeployment
         if (showDialogs)
         {
             return this._dialogProvider.ShowUpdateDownloadDialog(updateRequest, this._apiSoftwareService);
-            //throw new NotImplementedException();
         }
 
-        var downloadAppTask = SaveFileToUpdateFolder(updateRequest.ApplicationReleaseFile);
-        var downloadExtractorTask = SaveFileToUpdateFolder(updateRequest.ExtractorReleaseFile);
+        var downloadResult = await _apiSoftwareService.DownloadPascage(updateRequest.ApplicationReleaseFile);
+        if (!downloadResult.IsSuccess) return null;
 
-        await Task.WhenAll(downloadAppTask, downloadExtractorTask);
+        var checkResult = await FilesService.VerifyChecksum(downloadResult.Value);
+        if (!checkResult.IsSuccess) return null;
 
-        if (downloadAppTask.Result.IsSuccess && downloadExtractorTask.Result.IsSuccess)
-        {
-            return new DownloadedUpdate
-            {
-                AppInfo = updateRequest.AppInfo,
-                Release = updateRequest.Release,
-                ApplicationReleaseFile = updateRequest.ApplicationReleaseFile,
-                ExtractorReleaseFile = updateRequest.ExtractorReleaseFile,
-                ApplicationPascagePath = downloadAppTask.Result.Value,
-                ExtractorPath = downloadExtractorTask.Result.Value
-            };
-        }
-        return null;
+        var saveFilesResult = await FilesService.SaveFilesToUpdateFolder(updateRequest, downloadResult.Value);
+        return saveFilesResult.IsSuccess ? saveFilesResult.Value : null;
     }
-    private async Task<OperationResult<string>> SaveFileToUpdateFolder(ReleaseFile releaseFile)
+    private DeploymentOrder GetDeploymentOrder(DownloadUpdateRequest request, UpdateMethod method)
     {
-        var downloadresult = await _apiSoftwareService.DownloadToTempFile(releaseFile);
-        if (!downloadresult.IsSuccess) return downloadresult.Error;
+        if (method is UpdateMethod.Manual or UpdateMethod.DownloadAndUpdateOnRequest)
+            return this._dialogProvider.ShowUpdateInfoDialog(request);
 
-        string tempFile = downloadresult.Value;
-
-        if (!await FilesService.VerifyChecksum(tempFile, releaseFile.CheckSum))
-            return new Exception($"Ошибка проверки файла {releaseFile.Name}: не совпадает контрольная сумма");
-
-        try
-        {
-            return FilesService.MoveFileToUpdateDirectory(tempFile, releaseFile.Name);
-        }
-        catch (Exception ex)
-        {
-            return ex;
-        }
+        return DeploymentOrder.Quietly;
     }
 
-    private DeploymentOrder GetDeploymentOrder(DownloadUpdateRequest request, UpdateMethod method) =>
-        method == UpdateMethod.Manual || method == UpdateMethod.DownloadAndUpdateOnRequest
-        ? this._dialogProvider.ShowUpdateInfoDialog(request)
-        : DeploymentOrder.Quietly;
-
-
-    private DeploymentOrder GetDeploymentOrder(DownloadedUpdate update, UpdateMethod method, DeploymentOrder order = null) => method switch
+    private DeploymentOrder GetDeploymentOrder(DownloadedUpdate update, UpdateMethod method, DeploymentOrder order = null)
     {
-        UpdateMethod.Manual => order ?? this._dialogProvider.ShowUpdateInfoDialog(update),
+        switch (method)
+        {
+            case UpdateMethod.AutomaticDownload_UpdateOnRequest:
+                if (order == null) 
+                    return DeploymentOrder.Quietly;
+                return this._dialogProvider.ShowUpdateInfoDialog(update);
+                
+            case UpdateMethod.DownloadAndUpdateOnRequest:
+                return order == null ? DeploymentOrder.Quietly : DeploymentOrder.Immediately;
 
-        UpdateMethod.AutomaticDownload_UpdateOnRequest => order == null
-        ? DeploymentOrder.Quietly
-        : this._dialogProvider.ShowUpdateInfoDialog(update),
+            case UpdateMethod.Manual: 
+                return order ?? this._dialogProvider.ShowUpdateInfoDialog(update);
 
-        UpdateMethod.DownloadAndUpdateOnRequest => order == null
-        ? DeploymentOrder.Quietly
-        : DeploymentOrder.Immediately,
-
-        _ => DeploymentOrder.Quietly
-    };
+            case UpdateMethod.NoUpdate:
+            case UpdateMethod.Automatic:
+            default: return DeploymentOrder.Quietly;
+        }
+    }
+   
     
     private bool UpdateIsInQueueToDeploy(Version version)
     {

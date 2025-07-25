@@ -24,18 +24,6 @@ internal class DialogProvider
 
         ShowException(error.Message, "Ошибка проверки обновления");
     }
-    public void ShowException_GetExtractorError(Exception error, Version updateVersion, UpdateMethod method)
-    {
-        if (method != UpdateMethod.Manual) return;
-
-        string message = $"Обнаружена новая версия {updateVersion.ToFormattedString()}, " +
-                    "но не удалось получить информацию о загрузке.\n" +
-                    "Вы можете повторить позже.\n\n" +
-                    "Ошибка: " + error.Message;
-
-        this.ShowException(message, "Ошибка загрузки обновления");
-    }
-
     internal void ShowMessage(string message, string caption) => DialogsOwner.Dispatcher.Invoke(() =>
     {
         MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
@@ -103,7 +91,7 @@ internal class DialogProvider
             ApplicationName = _application.ApplicationName,
             UpdateFeaturesHeader = "Новые возможности в версии " + update.Release.Version.ToFormattedString(),
             UpdateVersion = update.Release.Version.ToFormattedString(),
-            UpdateSize = FilesService.FormatBytes(update.ApplicationReleaseFile.Size + update.ExtractorReleaseFile.Size, 1, true),
+            UpdateSize = FilesService.FormatBytes(update.ApplicationReleaseFile.Size, 1, true),
             UpdateStatus = "Не запущено",
             UpdateDetailsUri = _application.DownloadPage,
             CurrentVersion = _application.Version.ToFormattedString(),

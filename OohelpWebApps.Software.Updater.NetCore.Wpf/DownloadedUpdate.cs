@@ -8,7 +8,6 @@ internal class DownloadedUpdate : IUpdate
     public ApplicationInfo AppInfo { get; set; }
     public ApplicationRelease Release { get; set; }
     public ReleaseFile ApplicationReleaseFile { get; set; }
-    public ReleaseFile ExtractorReleaseFile { get; set; }
     public string ApplicationPascagePath { get; set; }
     public string ExtractorPath { get; set; }
     public bool StartApplicationAfterDeployment { get; set; }

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 using OohelpWebApps.Software.Updater.Common;
+using OohelpWebApps.Software.Updater.Models;
 using OohelpWebApps.Software.Updater.Services;
 
 namespace OohelpWebApps.Software.Updater.Dialogs;
@@ -20,9 +21,8 @@ internal partial class UpdateDownloadDialog : Window, INotifyPropertyChanged
     private string progressStatus;
     private bool progressIsIndeterminate;
 
-    private readonly int _bytesTotal;
-    private readonly string _bytesTotalString;
-    private int _bytesLoaded;
+    private string _bytesTotalString = string.Empty;
+
     internal DownloadedUpdate DownloadedUpdate { get; private set; }
     internal string ErrorMessage { get; private set; }
 
@@ -52,57 +52,53 @@ internal partial class UpdateDownloadDialog : Window, INotifyPropertyChanged
     {
         this._apiService = apiService;
         this._updateRequest = updateRequest;
+        this._apiService.ContentLengthUpdated += ApiService_ContentLengthUpdated;        
+    }
 
-        this._bytesTotal = updateRequest.ApplicationReleaseFile.Size + updateRequest.ExtractorReleaseFile.Size;
-        this._bytesTotalString = FilesService.FormatBytes(_bytesTotal, 1, true);
+    private void ApiService_ContentLengthUpdated(object sender, long? e)
+    {
+        if (e.HasValue)
+        {
+            this._bytesTotalString = FilesService.FormatBytes(e.Value, 1, true);
+        }
+        else
+        {
+            this.ProgressIsIndeterminate = true;
+        }
     }
 
     protected override async void OnContentRendered(EventArgs e)
     {
         base.OnContentRendered(e);
-        Progress<int> progress = new Progress<int>(UpdateProgress);
+        Progress<DownloadProgress> progress = new Progress<DownloadProgress>(UpdateProgress);
         bool result = false;
 
-        string downloaded_appFile = string.Empty;
-        string downloaded_extractorFile = string.Empty;
-
         ReleaseFile _appFile = this._updateRequest.ApplicationReleaseFile;
-        ReleaseFile _extractorFile = this._updateRequest.ExtractorReleaseFile;
 
         try
         {
-            downloaded_appFile = await _apiService.DownloadToTempFile(_appFile.Id, progress, _cancellationTokenSource.Token);
-            downloaded_extractorFile = await _apiService.DownloadToTempFile(_extractorFile.Id, progress, _cancellationTokenSource.Token);
+            var downloadResult = await _apiService.DownloadPascage(_appFile, progress, _cancellationTokenSource.Token);
+            if (!downloadResult.IsSuccess) throw new Exception($"Ошибка загрузки: {downloadResult.Error.Message}");
 
             this.ProgressIsIndeterminate = true;
-            this.ProgressStatus = "Проверка контрольной суммы...";                        
+            this.ProgressStatus = "Проверка контрольной суммы...";
 
-            await Task.WhenAll(
-                FilesService.ThrowIfChecksumInvalid(_appFile, downloaded_appFile),
-                FilesService.ThrowIfChecksumInvalid(_extractorFile, downloaded_extractorFile));
+            var checkResult = await FilesService.VerifyChecksum(downloadResult.Value);
+            if (!checkResult.IsSuccess) throw new Exception($"Ошибка проверки: {checkResult.Error.Message}");
 
-            downloaded_appFile = FilesService.MoveFileToUpdateDirectory(downloaded_appFile, _appFile.Name);
-            downloaded_extractorFile = FilesService.MoveFileToUpdateDirectory(downloaded_extractorFile, _extractorFile.Name);
+            var saveFilesResult = await FilesService.SaveFilesToUpdateFolder(this._updateRequest, downloadResult.Value);
+            if (!saveFilesResult.IsSuccess) throw saveFilesResult.Error;
 
-            this.DownloadedUpdate = new DownloadedUpdate
-            {
-                ApplicationReleaseFile = _appFile,
-                ApplicationPascagePath = downloaded_appFile,
-                ExtractorReleaseFile = _extractorFile,
-                ExtractorPath = downloaded_extractorFile,
-                Release = this._updateRequest.Release
-            };
+            this.DownloadedUpdate = saveFilesResult.Value;
             result = true;
         }
         catch (OperationCanceledException)
         {
-            ClearFiles(downloaded_appFile, downloaded_extractorFile);
             this.DownloadedUpdate = null;
             result = true;
         }
         catch (Exception ex)
         {
-            ClearFiles(downloaded_appFile, downloaded_extractorFile);
             this.ErrorMessage = ex.GetBaseException().Message;
             result = false;
         }
@@ -110,26 +106,18 @@ internal partial class UpdateDownloadDialog : Window, INotifyPropertyChanged
         {
             this._isFinished = true;
             this._cancellationTokenSource.Dispose();
+            this._apiService.ContentLengthUpdated -= ApiService_ContentLengthUpdated;
             this.DialogResult = result;
         }
     }
-    private static void ClearFiles(params string[] files)
-    {
-        foreach (var file in files)
-        {
-            if(!string.IsNullOrEmpty(file) && System.IO.File.Exists(file))
-                System.IO.File.Delete(file);
-        }
-    }
 
-    private void UpdateProgress(int e)
+    private void UpdateProgress(DownloadProgress p)
     {
-        this._bytesLoaded += e;
-        int persent = this._bytesLoaded * 100 / this._bytesTotal;
+        var persent = p.GetProgress();
         if (this.ProgressValue != persent)
         {
-            this.ProgressValue = this._bytesLoaded * 100 / this._bytesTotal;
-            this.ProgressStatus = $"Завершено: {persent}% ({FilesService.FormatBytes(this._bytesLoaded, 1, true)} / {_bytesTotalString})";
+            this.ProgressValue = persent;
+            this.ProgressStatus = $"Завершено: {persent}% ({FilesService.FormatBytes(p.Read, 1, true)} / {_bytesTotalString})";
         }
     }
 

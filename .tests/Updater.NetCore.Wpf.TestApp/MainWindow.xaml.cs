@@ -21,7 +21,7 @@ public partial class MainWindow : Window, IUpdatableApplication
     private readonly Version version = new Version(1, 15, 2);// ApplicationDeployment.GetApplicationVersion(Assembly.GetExecutingAssembly());
     public string ApplicationName => "OohPanel";
     public Version Version => version;
-    public Uri UpdatesServer { get; } = /*new Uri("https://localhost:7164");*/  new Uri("https://software.oohelp.net");
+    public Uri UpdatesServer { get; } = new Uri("https://localhost:7164");// new Uri("https://software.oohelp.net");
     Window IUpdatableApplication.MainWindow => this;
     public Uri DownloadPage { get; } = new Uri("https://oohelp.net");
 

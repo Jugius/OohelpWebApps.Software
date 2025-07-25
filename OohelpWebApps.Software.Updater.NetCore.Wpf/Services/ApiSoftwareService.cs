@@ -1,12 +1,14 @@
 ﻿using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using OohelpWebApps.Software.Updater.Common;
-using OohelpWebApps.Software.Updater.Common.Enums;
+using OohelpWebApps.Software.Updater.Models;
 
 namespace OohelpWebApps.Software.Updater.Services;
 internal class ApiSoftwareService
 {
+    public event EventHandler<long?> ContentLengthUpdated;
     private readonly HttpClient _httpClient;
     public ApiSoftwareService(Uri baseUri)
     {
@@ -37,64 +39,62 @@ internal class ApiSoftwareService
             return ex;
         }
     }
-    public async Task<OperationResult<ReleaseFile>> GetExtractorFile(RuntimeVersion extractorRuntime)
+    public async Task<OperationResult<UpdatePackage>> DownloadPascage(ReleaseFile releaseFile)
     {
-        const string extractorApplicationName = "ZipExtractor";
-
-        var extractorAppResult = await GetApplicationInfo(extractorApplicationName, null);
-        if (!extractorAppResult.IsSuccess)
-            return extractorAppResult.Error;
-
-        var extractorRelease = extractorAppResult.Value.Releases
-            .Where(r => r.Files.Any(f => f.Kind == FileKind.Install && f.RuntimeVersion == extractorRuntime))
-            .MaxBy(r => r.Version);
-
-        if (extractorRelease == null)
-            return new Exception($"Не найден распаковщик для приложения на платформе {extractorRuntime}");
-
-        return extractorRelease.Files.First(f => f.Kind == FileKind.Install && f.RuntimeVersion == extractorRuntime);
-    }
-    public async Task<OperationResult<string>> DownloadToTempFile(ReleaseFile releaseFile)
-    {
+        Uri requestUri = new Uri($"update/{releaseFile.Id}", UriKind.Relative);
         try
         {
-            return await DownloadToTempFile(releaseFile.Id);
+            return await _httpClient.GetFromJsonAsync<UpdatePackage>(requestUri);
         }
+        catch (HttpRequestException httpUnavailable) when (httpUnavailable.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+        {
+            return new Exception("Сервис временно недоступен.");
+        }        
         catch (Exception ex)
         {
-            return new Exception($"Ошибка загрузки файла {releaseFile.Name}: " + ex.GetBaseException().Message);
+            return ex;
         }
     }
-    public async Task<string> DownloadToTempFile(Guid fileId, IProgress<int> progress = null, CancellationToken cancellationToken = default)
+    public async Task<OperationResult<UpdatePackage>> DownloadPascage(ReleaseFile releaseFile, IProgress<DownloadProgress> progress, CancellationToken cancellationToken = default)
     {
-        const int BufferSize = 81920;
+        Uri requestUri = new Uri($"update/{releaseFile.Id}", UriKind.Relative);
 
-        string tempFile = Path.GetTempFileName();
-        Uri requestUri = new Uri($"file/{fileId}", UriKind.Relative);
-
-
-        await using var fileStream = new FileStream(tempFile, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None, bufferSize: BufferSize, useAsync: true);
-        using var response = await _httpClient.GetAsync(requestUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        using var response = await _httpClient.GetAsync(requestUri, HttpCompletionOption.ResponseHeadersRead);
+        if (!response.IsSuccessStatusCode)
+            return new Exception(response.ReasonPhrase);
 
         var contentLength = response.Content.Headers.ContentLength;
+        ContentLengthUpdated?.Invoke(this, contentLength);
 
-        using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        if (progress == null || !contentLength.HasValue)
-        {
-            await contentStream.CopyToAsync(fileStream, cancellationToken);
-            return tempFile;
-        }
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var ms = new MemoryStream();
 
-        var buffer = new byte[BufferSize];
-        long totalBytesRead = 0;
+        var buffer = new byte[8192];
+        long totalRead = 0;
         int bytesRead;
-        while ((bytesRead = await contentStream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) != 0)
-        {
-            await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken).ConfigureAwait(false);
-            totalBytesRead += bytesRead;
-            progress.Report(bytesRead);            
-        }
+        int lastReported = -1;
 
-        return tempFile;
-    }    
+        while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken)) > 0)
+        {
+            await ms.WriteAsync(buffer.AsMemory(0, bytesRead));
+            totalRead += bytesRead;
+
+            if (contentLength.HasValue)
+            {
+                int percent = (int)Math.Round((double)totalRead / contentLength.Value * 100);
+                if (percent != lastReported)
+                {
+                    lastReported = percent;
+                    progress.Report(new DownloadProgress(contentLength.Value, totalRead));
+                }                
+            }
+        }
+        ms.Seek(0, SeekOrigin.Begin);
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        var pascage = await JsonSerializer.DeserializeAsync<UpdatePackage>(ms, options, cancellationToken);
+        return pascage;
+    }  
 }

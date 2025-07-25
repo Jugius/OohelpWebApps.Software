@@ -1,7 +1,8 @@
 ﻿using System.IO;
+using System.IO.Packaging;
 using System.Security.Cryptography;
 using System.Text;
-using OohelpWebApps.Software.Updater.Common;
+using OohelpWebApps.Software.Updater.Models;
 
 namespace OohelpWebApps.Software.Updater.Services;
 internal static class FilesService
@@ -15,34 +16,30 @@ internal static class FilesService
     const int MBValue = 1048576;
     const int GBValue = 1073741824;
 
-    public static async Task<string> ComputeFileHash(string filePath)
+    public static async Task ThrowIfChecksumInvalid(FileBytes fileBytes)
     {
-        byte[] bytes;
+        var hash = await ComputeHash(fileBytes.Bytes).ConfigureAwait(false);
 
-        await using (var stream = System.IO.File.OpenRead(filePath))
+        if (!string.Equals(hash, fileBytes.Checksum, StringComparison.OrdinalIgnoreCase))
+            throw new Exception($"Ошибка проверки файла {fileBytes.FileName}: не совпадает контрольная сумма");
+    }
+    private static async Task<string> ComputeHash(byte[] bytes)
+    {
+        byte[] hashBytes;
+
+        await using (var stream = new MemoryStream(bytes))
         {
-            bytes = await MD5.Create().ComputeHashAsync(stream);
+            hashBytes = await MD5.Create().ComputeHashAsync(stream);
         }
 
-        var s = new StringBuilder(bytes.Length * 2);
+        var s = new StringBuilder(hashBytes.Length * 2);
 
-        foreach (var b in bytes)
+        foreach (var b in hashBytes)
             s.Append(b.ToString("X2").ToLower());
 
         return s.ToString();
     }
-    public static async Task ThrowIfChecksumInvalid(ReleaseFile releaseFile, string filePath)
-    {
-        var hash = await ComputeFileHash(filePath).ConfigureAwait(false);
-        
-        if (!string.Equals(hash, releaseFile.CheckSum, StringComparison.OrdinalIgnoreCase))
-            throw new Exception($"Ошибка проверки файла {releaseFile.Name}: не совпадает контрольная сумма");
-    }
-    public static async Task<bool> VerifyChecksum(string filePath, string checkSum)
-    {
-        var fileHash = await ComputeFileHash(filePath).ConfigureAwait(false);
-        return string.Equals(fileHash, checkSum, StringComparison.OrdinalIgnoreCase);
-    }
+    
     public static string MoveFileToUpdateDirectory(string sourceFile, string destinationFileName)
     {
         string destFolder = Path.Combine(AppContext.BaseDirectory, UPDATE_DIRECTORY_NAME);
@@ -93,5 +90,79 @@ internal static class FilesService
         }
         chars[^1] = '}';
         return new string(chars);
+    }
+
+    internal static async Task<OperationResult<bool>> VerifyChecksum(UpdatePackage pascage)
+    {
+        var results = await Task.WhenAll(VerifyChecksum(pascage.Application), VerifyChecksum(pascage.Extractor));
+        if (results.Any(a => !a.IsSuccess))
+        {
+            var error = string.Join(Environment.NewLine, results.Where(a => !a.IsSuccess).Select(a => a.Error.Message));
+            return new Exception(error);
+        }
+        return true;
+    }
+    internal static async Task<OperationResult<bool>> VerifyChecksum(FileBytes fileBytes)
+    {
+        var hash = await ComputeHash(fileBytes.Bytes).ConfigureAwait(false);
+        
+        if (string.Equals(hash, fileBytes.Checksum, StringComparison.OrdinalIgnoreCase)) 
+            return true;
+        
+        return new Exception($"{fileBytes.FileName}: не совпадает контрольная сумма");
+    }
+
+    internal static async Task<OperationResult<DownloadedUpdate>> SaveFilesToUpdateFolder(DownloadUpdateRequest updateRequest, UpdatePackage pascage)
+    {
+        var appRes = SaveFileToUpdateFolder(pascage.Application);
+        var extrRes = SaveFileToUpdateFolder(pascage.Extractor);
+        var results = await Task.WhenAll(appRes, extrRes);
+
+        if (results.All(a => a.IsSuccess))
+        {
+            return new DownloadedUpdate
+            {
+                AppInfo = updateRequest.AppInfo,
+                Release = updateRequest.Release,
+                ApplicationReleaseFile = updateRequest.ApplicationReleaseFile,
+                ApplicationPascagePath = appRes.Result.Value,
+                ExtractorPath = extrRes.Result.Value,
+            };
+        }
+        
+        DeleteFileFromUpdateFolder(pascage.Application);
+        DeleteFileFromUpdateFolder(pascage.Extractor);
+
+        var error = string.Join(Environment.NewLine, results.Where(a => !a.IsSuccess).Select(a => a.Error.Message));
+        return new Exception(error);
+    }
+    internal static async Task<OperationResult<string>> SaveFileToUpdateFolder(FileBytes fileBytes)
+    {
+        string destFolder = Path.Combine(AppContext.BaseDirectory, UPDATE_DIRECTORY_NAME);
+        Directory.CreateDirectory(destFolder);
+        string destFile = Path.Combine(destFolder, fileBytes.FileName);
+        try
+        {
+            await File.WriteAllBytesAsync(destFile, fileBytes.Bytes);
+            return destFile;
+        }
+        catch (Exception ex)
+        {
+            return new Exception($"Ошибка сохранения файла {fileBytes.FileName}: {ex.Message}");
+        }        
+    }
+    private static void DeleteFileFromUpdateFolder(FileBytes fileBytes)
+    {
+        string destFolder = Path.Combine(AppContext.BaseDirectory, UPDATE_DIRECTORY_NAME);        
+        string destFile = Path.Combine(destFolder, fileBytes.FileName);
+
+        if (!File.Exists(destFile)) return;
+
+        try
+        {
+            File.Delete(destFile);
+        }
+        catch{}
+
     }
 }

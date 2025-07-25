@@ -6,5 +6,4 @@ internal interface IUpdate
     ApplicationInfo AppInfo { get; set; }
     ApplicationRelease Release { get; set; }
     ReleaseFile ApplicationReleaseFile { get; set; }
-    ReleaseFile ExtractorReleaseFile { get; set; }
 }
