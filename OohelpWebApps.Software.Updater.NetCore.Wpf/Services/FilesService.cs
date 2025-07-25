@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.IO.Packaging;
 using System.Security.Cryptography;
 using System.Text;
 using OohelpWebApps.Software.Updater.Models;
@@ -16,13 +15,6 @@ internal static class FilesService
     const int MBValue = 1048576;
     const int GBValue = 1073741824;
 
-    public static async Task ThrowIfChecksumInvalid(FileBytes fileBytes)
-    {
-        var hash = await ComputeHash(fileBytes.Bytes).ConfigureAwait(false);
-
-        if (!string.Equals(hash, fileBytes.Checksum, StringComparison.OrdinalIgnoreCase))
-            throw new Exception($"Ошибка проверки файла {fileBytes.FileName}: не совпадает контрольная сумма");
-    }
     private static async Task<string> ComputeHash(byte[] bytes)
     {
         byte[] hashBytes;
@@ -40,14 +32,6 @@ internal static class FilesService
         return s.ToString();
     }
     
-    public static string MoveFileToUpdateDirectory(string sourceFile, string destinationFileName)
-    {
-        string destFolder = Path.Combine(AppContext.BaseDirectory, UPDATE_DIRECTORY_NAME);
-        Directory.CreateDirectory(destFolder);
-        string destFile = Path.Combine(destFolder, destinationFileName);
-        File.Move(sourceFile, destFile, true);
-        return destFile;
-    }
     public static string FormatBytes(long bytes, int decimalPlaces, bool showByteType)
     {
         double newBytes = bytes;        
@@ -92,24 +76,24 @@ internal static class FilesService
         return new string(chars);
     }
 
-    internal static async Task<OperationResult<bool>> VerifyChecksum(UpdatePackage pascage)
+    internal static async Task<OperationResult> VerifyChecksum(UpdatePackage pascage)
     {
         var results = await Task.WhenAll(VerifyChecksum(pascage.Application), VerifyChecksum(pascage.Extractor));
-        if (results.Any(a => !a.IsSuccess))
+        if (results.Any(a => a.IsFailure))
         {
-            var error = string.Join(Environment.NewLine, results.Where(a => !a.IsSuccess).Select(a => a.Error.Message));
-            return new Exception(error);
+            var error = string.Join(Environment.NewLine, results.Where(a => a.IsFailure).Select(a => a.Error.Message));
+            return OperationResult.Failure(new Exception(error));
         }
-        return true;
+        return OperationResult.Success();
     }
-    internal static async Task<OperationResult<bool>> VerifyChecksum(FileBytes fileBytes)
+    internal static async Task<OperationResult> VerifyChecksum(FileBytes fileBytes)
     {
         var hash = await ComputeHash(fileBytes.Bytes).ConfigureAwait(false);
         
         if (string.Equals(hash, fileBytes.Checksum, StringComparison.OrdinalIgnoreCase)) 
-            return true;
+            return OperationResult.Success();
         
-        return new Exception($"{fileBytes.FileName}: не совпадает контрольная сумма");
+        return OperationResult.Failure(new Exception($"{fileBytes.FileName}: не совпадает контрольная сумма"));
     }
 
     internal static async Task<OperationResult<DownloadedUpdate>> SaveFilesToUpdateFolder(DownloadUpdateRequest updateRequest, UpdatePackage pascage)
