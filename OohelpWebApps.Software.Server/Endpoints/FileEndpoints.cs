@@ -1,7 +1,6 @@
 ﻿using OohelpWebApps.Software.Contracts.Requests;
 using OohelpWebApps.Software.Server.Mapping;
 using OohelpWebApps.Software.Server.Services;
-using Serilog;
 
 namespace OohelpWebApps.Software.Server.Endpoints;
 
@@ -25,9 +24,9 @@ public static class FileEndpoints
     {
         var result = await appService.DeleteFile(id);
 
-        return result.Match(
-            s => Results.Ok(),
-            f => result.Error.ToApiErrorResult());
+        return result.IsSuccess
+            ? Results.Ok()
+            : result.Error.ToApiErrorResult();
     }
     private static async Task<IResult> DownloadFile(Guid id, ApplicationsService appService)
     {

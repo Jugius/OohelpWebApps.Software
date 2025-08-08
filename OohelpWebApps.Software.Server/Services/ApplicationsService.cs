@@ -2,22 +2,24 @@
 using OohelpSoft.Utiles.Result;
 using OohelpWebApps.Software.Contracts.Requests;
 using OohelpWebApps.Software.Domain;
+using OohelpWebApps.Software.Server.Common.Interfaces;
 using OohelpWebApps.Software.Server.Database;
 using OohelpWebApps.Software.Server.Exceptions;
 using OohelpWebApps.Software.Server.Mapping;
 using OohelpWebApps.Software.Server.Models;
+using OohelpWebApps.Software.Server.Services.UploadService;
 
 namespace OohelpWebApps.Software.Server.Services;
 
 public class ApplicationsService
 {
     private readonly AppDbContext _dbContext;
-    private readonly FileSystemService _fileSystemService;
+    private readonly IUploadService _uploadService;
 
-    public ApplicationsService(AppDbContext context, FileSystemService fileSystemService)
+    public ApplicationsService(AppDbContext context, FileUploadService fileSystemService)
     {
         _dbContext = context;
-        _fileSystemService = fileSystemService;
+        _uploadService = fileSystemService;
     }
     public async Task<Result<List<ApplicationInfo>>> GetAllApplications()
     {
@@ -121,7 +123,7 @@ public class ApplicationsService
 
             foreach (var id in filesIds)
             {
-                _fileSystemService.DeleteFile(id);
+                _ = await _uploadService.DeleteFileAsync(id);
             }
 
             _dbContext.Applications.Remove(app);
@@ -185,7 +187,7 @@ public class ApplicationsService
 
             foreach (var id in filesIds)
             {
-                _fileSystemService.DeleteFile(id);
+                _ = await _uploadService.DeleteFileAsync(id);
             }
 
             _dbContext.Releases.Remove(release);
@@ -256,7 +258,7 @@ public class ApplicationsService
         var file = request.ToDto();
 
         file.ReleaseId = releaseId;
-        file.CheckSum = _fileSystemService.GetCheckSum(request.FileBytes);
+        file.CheckSum = await FileCheckSum.GetCheckSum(request.FileBytes);
         file.Size = request.FileBytes.Length;
 
         try
@@ -269,7 +271,7 @@ public class ApplicationsService
             return ApiException.DatabaseError(ex.GetBaseException().Message);
         }
 
-        var saveFileResult = await _fileSystemService.SaveFile(request.FileBytes, file.Id);
+        var saveFileResult = await _uploadService.SaveAsync(request.FileBytes, file.Id);
         if (saveFileResult.IsSuccess)
         {
             return file.ToDomain();
@@ -282,20 +284,20 @@ public class ApplicationsService
         }
     }
 
-    public async Task<Result<bool>> DeleteFile(Guid fileId)
+    public async Task<Result> DeleteFile(Guid fileId)
     {
         try
         {
-            var file = await _dbContext.Files.FirstOrDefaultAsync(a => a.Id == fileId);
-            if (file == null) return ApiException.NotFound();
+            var releaseFile = await _dbContext.Files.FirstOrDefaultAsync(a => a.Id == fileId);
+            if (releaseFile == null) return ApiException.NotFound();
 
-            var delFileRes = _fileSystemService.DeleteFile(file.Id);
+            var delFileRes = await _uploadService.DeleteFileAsync(releaseFile.Id);
 
             if (delFileRes.IsSuccess)
             {
-                _dbContext.Files.Remove(file);
+                _dbContext.Files.Remove(releaseFile);
                 await _dbContext.SaveChangesAsync();
-                return true;
+                return Result.Success();
             }
             else
             {
@@ -342,7 +344,7 @@ public class ApplicationsService
 
             if (file == null) return ApiException.NotFound();
 
-            var bytesResult = await _fileSystemService.GetFileBytes(fileId);
+            var bytesResult = await _uploadService.GetFileAsync(fileId);
             if (!bytesResult.IsSuccess) return bytesResult.Error;
 
             return new FileBytes

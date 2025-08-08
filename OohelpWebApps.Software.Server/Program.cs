@@ -2,9 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OohelpWebApps.Software.Server;
+using OohelpWebApps.Software.Server.Common.Interfaces;
 using OohelpWebApps.Software.Server.Database;
 using OohelpWebApps.Software.Server.Endpoints;
 using OohelpWebApps.Software.Server.Services;
+using OohelpWebApps.Software.Server.Services.UploadService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,7 @@ builder.Services.AddDbContext<AppDbContext>(x => x.UseSqlServer(builder.Configur
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ApplicationsService>();
-builder.Services.AddSingleton<FileSystemService>();
+builder.Services.AddScoped<IUploadService, FileUploadService>();
 
 builder.Services.AddAuthentication(options =>
 {
