@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OohelpSoft.Helpers.Result;
+using OohelpSoft.Utiles.Result;
 using OohelpWebApps.Software.Contracts.Requests;
 using OohelpWebApps.Software.Domain;
 using OohelpWebApps.Software.Server.Database;
