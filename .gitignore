@@ -399,3 +399,4 @@ FodyWeavers.xsd
 /OohelpWebApps.Software.Server/appsettings.Production.json
 /OohelpWebApps.Software.Server/UploadedFiles
 /.vscode
+/OohelpWebApps.Software.Server/web.config
