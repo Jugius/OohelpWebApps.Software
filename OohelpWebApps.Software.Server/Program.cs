@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using System.Configuration;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OohelpWebApps.Software.Server;
 using OohelpWebApps.Software.Server.Common.Interfaces;
+using OohelpWebApps.Software.Server.Configurations;
 using OohelpWebApps.Software.Server.Database;
 using OohelpWebApps.Software.Server.Endpoints;
 using OohelpWebApps.Software.Server.Services;
@@ -13,10 +16,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.RegisterSerilog();
 
 builder.Services.AddDbContext<AppDbContext>(x => x.UseSqlServer(builder.Configuration.GetConnectionString(nameof(AppDbContext))));
-
+builder.Services.Configure<MinioOptions>(builder.Configuration.GetSection(MinioOptions.Key))
+    .AddSingleton(s => s.GetRequiredService<IOptions<MinioOptions>>().Value);
 builder.Services.AddHttpContextAccessor();
+
+
 builder.Services.AddScoped<ApplicationsService>();
-builder.Services.AddScoped<IUploadService, FileUploadService>();
+
+builder.Services.AddScoped<IUploadService, MinioUploadService>();
 
 builder.Services.AddAuthentication(options =>
 {

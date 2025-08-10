@@ -7,7 +7,6 @@ using OohelpWebApps.Software.Server.Database;
 using OohelpWebApps.Software.Server.Exceptions;
 using OohelpWebApps.Software.Server.Mapping;
 using OohelpWebApps.Software.Server.Models;
-using OohelpWebApps.Software.Server.Services.UploadService;
 
 namespace OohelpWebApps.Software.Server.Services;
 
@@ -16,10 +15,10 @@ public class ApplicationsService
     private readonly AppDbContext _dbContext;
     private readonly IUploadService _uploadService;
 
-    public ApplicationsService(AppDbContext context, FileUploadService fileSystemService)
+    public ApplicationsService(AppDbContext context, IUploadService uploadService)
     {
         _dbContext = context;
-        _uploadService = fileSystemService;
+        _uploadService = uploadService;
     }
     public async Task<Result<List<ApplicationInfo>>> GetAllApplications()
     {
