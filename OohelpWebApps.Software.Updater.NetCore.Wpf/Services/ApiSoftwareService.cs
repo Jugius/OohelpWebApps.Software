@@ -24,7 +24,8 @@ internal class ApiSoftwareService
 
         try
         {
-            return await _httpClient.GetFromJsonAsync<ApplicationInfo>(query);             
+            var info = await _httpClient.GetFromJsonAsync<ApplicationInfo>(query);
+            return info;
         }
         catch (HttpRequestException httpUnavailable) when (httpUnavailable.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
         {

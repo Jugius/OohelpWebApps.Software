@@ -6,7 +6,7 @@ internal class OperationResult
     public Exception Error { get; }
     protected OperationResult()
     { 
-        IsSuccess = false;
+        IsSuccess = true;
         Error = default;
     }
     protected OperationResult(Exception error)
