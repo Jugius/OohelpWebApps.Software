@@ -1,4 +1,4 @@
-﻿using OohelpSoft.Helpers.Result;
+﻿using OohelpSoft.Utiles.Result;
 using OohelpWebApps.Software.Domain;
 using SoftwareManager.Helpers;
 using SoftwareManager.Mapping;

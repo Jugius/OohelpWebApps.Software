@@ -45,12 +45,10 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("InAdminRole", options =>
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("InAdminRole", options =>
     options.RequireAuthenticatedUser().
     RequireRole("Admin"));
-});
 
 var app = builder.Build();
 

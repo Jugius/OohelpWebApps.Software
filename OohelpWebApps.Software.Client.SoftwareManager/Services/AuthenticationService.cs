@@ -4,7 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using OohelpSoft.Helpers.Result;
+using OohelpSoft.Utiles.Result;
 using SoftwareManager.Mapping;
 
 namespace SoftwareManager.Services;

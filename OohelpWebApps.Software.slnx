@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/.tests/">
+    <Project Path=".tests/Updater.NetCore.Wpf.TestApp/Updater.NetCore.Wpf.TestApp.csproj" />
+    <Project Path=".tests/Updater.NetFramework.WinForms.TestApp/Updater.NetFramework.WinForms.TestApp.csproj" Id="cdfb3257-6505-4ed8-9ee5-53bb9690c878" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Project Path="OohelpWebApps.Software.Client.SoftwareManager/OohelpWebApps.Software.Client.SoftwareManager.csproj" />
+  <Project Path="OohelpWebApps.Software.Contracts/OohelpWebApps.Software.Contracts.csproj" />
+  <Project Path="OohelpWebApps.Software.Domain/OohelpWebApps.Software.Domain.csproj" />
+  <Project Path="OohelpWebApps.Software.Server/OohelpWebApps.Software.Server.csproj" />
+  <Project Path="OohelpWebApps.Software.Updater.NetCore.Wpf/OohelpWebApps.Software.Updater.NetCore.Wpf.csproj" />
+  <Project Path="OohelpWebApps.Software.Updater.NetFramework.WinForms/OohelpWebApps.Software.Updater.NetFramework.WinForms.csproj" Id="97d8b78b-e9b5-4312-b8d3-28cf2a0054bd" />
+  <Project Path="OohelpWebApps.Software.ZipExtractor.WinForms/OohelpWebApps.Software.ZipExtractor.WinForms.csproj" />
+</Solution>
